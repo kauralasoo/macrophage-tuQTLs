@@ -172,7 +172,7 @@ rule make_all:
 		expand("processed/{study}/salmon/ensembl_87/{sample}/quant.sf", study = config["study"], sample=config["samples"]),
 		expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
 		expand("processed/{study}/reviseAnnotations/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"]),
-		expand("processed/{study}/leafcutter/leafcutter_perind.counts.gz", study = config["study"])
+		"processed/{study}/leafcutter/leafcutter_perind.counts.gz"
 	output:
 		"processed/{study}/out.txt"
 	resources:

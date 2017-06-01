@@ -5,7 +5,7 @@ star_index: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/STAR_index_87
 vcf_file: /nfs/users/nfs_k/ka8/scratch/projects/macrophage-gxe-study/genotypes/SL1344/hipsci.wec.gtarray.HumanCoreExome-12_v1_0.858samples.20141111.genotypes.GRCh38.sorted.filtered.vcf.gz
 chromosome_lengths: /lustre/scratch117/cellgen/team170/ka8/annotations/GRCh38/bt2-index/chromosome_lengths.txt
 samples: [aipt_A, aipt_B]
-annotations: ["reviseAnnotations.grp_1_contained","reviseAnnotations.grp_1_upstream","reviseAnnotations.grp_1_downstream","reviseAnnotations.grp_2_contained","reviseAnnotations.grp_2_upstream","reviseAnnotations.grp_2_downstream"]
+annotations: ["Ensembl_87", "reviseAnnotations.grp_1_contained","reviseAnnotations.grp_1_upstream","reviseAnnotations.grp_1_downstream","reviseAnnotations.grp_2_contained","reviseAnnotations.grp_2_upstream","reviseAnnotations.grp_2_downstream"]
 study: salmonella
 libType: ISR
 

@@ -2,7 +2,7 @@ ensembl_gtf: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/genes/Ensembl_87/Ho
 reference_genome: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa 
 salmon_ensembl_index: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/genes/Ensembl_87/salmon_index_87
 star_index: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/STAR_index_87
-vcf_file: /nfs/users/nfs_k/ka8/scratch/projects/macrophage-gxe-study/genotypes/acLDL/hipsci.wec.gtarray.HumanCoreExome-12_v1_0.858samples.20141111.genotypes.GRCh38.sorted.filtered.vcf.gz
+vcf_file: /nfs/users/nfs_k/ka8/scratch/projects/macrophage-gxe-study/genotypes/SL1344/hipsci.wec.gtarray.HumanCoreExome-12_v1_0.858samples.20141111.genotypes.GRCh38.sorted.filtered.vcf.gz
 chromosome_lengths: /lustre/scratch117/cellgen/team170/ka8/annotations/GRCh38/bt2-index/chromosome_lengths.txt
 samples: [aipt_A, aipt_B]
 annotations: ["reviseAnnotations.grp_1_contained","reviseAnnotations.grp_1_upstream","reviseAnnotations.grp_1_downstream","reviseAnnotations.grp_2_contained","reviseAnnotations.grp_2_upstream","reviseAnnotations.grp_2_downstream"]

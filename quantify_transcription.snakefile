@@ -173,7 +173,7 @@ rule make_all:
 		expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
 		expand("processed/{study}/reviseAnnotations/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"])
 	output:
-		"processed/acLDL/out.txt"
+		"processed/{study}/out.txt"
 	resources:
 		mem = 100
 	threads: 1

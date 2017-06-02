@@ -1,8 +1,24 @@
+#Sort fastq files by name before alignment
+rule sort_fastq:
+	input:
+		fq1 = "processed/{study}/fastq/{sample}.1.fastq.gz",
+		fq2 = "processed/{study}/fastq/{sample}.2.fastq.gz"	
+	output:
+		fq1 = "processed/{study}/fastq_sorted/{sample}.1.fastq.gz",
+		fq2 = "processed/{study}/fastq_sorted/{sample}.2.fastq.gz"
+	resources:
+		mem = 6000
+	threads: 10
+	shell:
+		"gzip -d -c {input.fq1} | seqkit fx2tab | sort -k1,1 -T . -S 5G --parallel 8 | seqkit tab2fx | gzip -c > {output.fq1} && "
+		"gzip -d -c {input.fq2} | seqkit fx2tab | sort -k1,1 -T . -S 5G --parallel 8 | seqkit tab2fx | gzip -c > {output.fq2}"
+
+
 #Align reads to the reference genome using STAR
 rule star_align:
 	input:
-		fq1 = "processed/{study}/fastq/{sample}.1.fastq.gz",
-		fq2 = "processed/{study}/fastq/{sample}.2.fastq.gz"
+		fq1 = "processed/{study}/fastq_sorted/{sample}.1.fastq.gz",
+		fq2 = "processed/{study}/fastq_sorted/{sample}.2.fastq.gz"
 	output:
 		bam = "processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam"
 	params:
@@ -92,8 +108,8 @@ rule construct_salmon_index:
 #Quantify gene expression using full Ensembl annotations
 rule reviseAnnotation_quant_salmon:
 	input:
-		fq1 = "processed/{study}/fastq/{sample}.1.fastq.gz",
-		fq2 = "processed/{study}/fastq/{sample}.2.fastq.gz",
+		fq1 = "processed/{study}/fastq_sorted/{sample}.1.fastq.gz",
+		fq2 = "processed/{study}/fastq_sorted/{sample}.2.fastq.gz",
 		salmon_index = "processed/annotations/salmon_index/{annotation}"
 	output:
 		"processed/{study}/salmon/{annotation}/{sample}/quant.sf"

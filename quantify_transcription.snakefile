@@ -30,7 +30,7 @@ rule star_align:
 	shell:
 		"STAR --runThreadN {threads} --outSAMtype BAM SortedByCoordinate --outWigType bedGraph "
 		"--outWigNorm None --outWigStrand Stranded --outSAMattrRGline \"{params.rg}\" "
-		"--readFilesCommand zcat --genomeDir {config[star_index]} --limitBAMsortRAM 22000000000 "
+		"--readFilesCommand zcat --genomeDir {config[star_index]} --limitBAMsortRAM 32000000000 "
 		"--outFileNamePrefix {params.prefix} --readFilesIn {input.fq1} {input.fq2} "
 
 #Index sorted bams

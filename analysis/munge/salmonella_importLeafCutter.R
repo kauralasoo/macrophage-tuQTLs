@@ -20,7 +20,7 @@ valid_gene_biotypes = c("lincRNA","protein_coding","IG_C_gene","IG_D_gene","IG_J
                         "IG_V_gene", "TR_C_gene","TR_D_gene","TR_J_gene", "TR_V_gene",
                         "3prime_overlapping_ncrna","known_ncrna", "processed_transcript",
                         "antisense","sense_intronic","sense_overlapping")
-transcript_data = tbl_df(readRDS("../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.transcript_data.rds")) %>%
+transcript_data = tbl_df(readRDS("../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.compiled_tx_metadata.rds")) %>%
   dplyr::filter(gene_biotype %in% valid_gene_biotypes, transcript_gencode_basic == "GENCODE basic", 
                 chromosome_name %in% valid_chromosomes)
 filtered_exons = exons[transcript_data$ensembl_transcript_id]

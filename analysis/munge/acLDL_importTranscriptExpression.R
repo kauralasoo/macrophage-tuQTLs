@@ -30,7 +30,7 @@ tx2gene = dplyr::select(transcript_data, gene_id, transcript_id, transcript_vers
   dplyr::transmute(TXNAME,gene_id, transcript_id)
 
 #Import gene-level abundances
-gene_abundances = tximport(file_names[1:10], type = "salmon", tx2gene = tx2gene[,1:2], importer = read_tsv, dropInfReps = TRUE)
+gene_abundances = tximport(file_names, type = "salmon", tx2gene = tx2gene[,1:2], importer = read_tsv, dropInfReps = TRUE)
 mean_by_condition = calculateMean(gene_abundances$abundance, design_matrix, factor = "condition_name")
 filtered_mean = mean_by_condition[rownames(mean_by_condition) %in% filtered_transcscript_data$ensembl_gene_id,]
 expressed_genes = filtered_mean[apply(filtered_mean, 1, max) > 1,]
@@ -78,4 +78,4 @@ se = SummarizedExperiment::SummarizedExperiment(
   colData = sample_meta, 
   rowData = transcript_metadata)
 
-saveRDS(se, "results/SummarizedExperiments/acLDL_salmon_ensembl.rds")
+saveRDS(se, "results/SummarizedExperiments/acLDL_salmon_Ensembl_87.rds")

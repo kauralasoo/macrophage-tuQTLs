@@ -7,7 +7,7 @@ load_all("../seqUtils/")
 load_all("analysis/housekeeping/")
 
 #Import Ensembl quant results for references
-ensembl_quants = readRDS("results/SummarizedExperiments/acLDL_salmonella_Ensembl_87.rds")
+ensembl_quants = readRDS("results/SummarizedExperiments/salmonella_salmon_Ensembl_87.rds")
 sample_names = colnames(ensembl_quants)
 
 #Iterate over annotations

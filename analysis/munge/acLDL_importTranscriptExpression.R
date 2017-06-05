@@ -2,6 +2,7 @@ library("dplyr")
 library("readr")
 library("tximport")
 library("devtools")
+library("SummarizedExperment")
 load_all("../seqUtils/")
 load_all("analysis/housekeeping/")
 
@@ -15,7 +16,7 @@ design_matrix = constructDesignMatrix_acLDL(sample_names) %>%
   dplyr::filter(!(condition %in% c("LAL", "LAL_AcLDL"))) #Remove LAL samples
 
 #Import transcript metadata
-transcript_data = tbl_df(readRDS("../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.transcript_data.rds")) %>%
+transcript_data = tbl_df(readRDS("../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.compiled_tx_metadata.rds")) %>%
   dplyr::rename(gene_id = ensembl_gene_id, transcript_id = ensembl_transcript_id, gene_name = external_gene_name, chr = chromosome_name)
 filtered_transcscript_data = readRDS("../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.compiled_tx_metadata.filtered.rds")
 
@@ -24,12 +25,12 @@ file_names = file.path("processed/acLDL/salmon/Ensembl_87/", design_matrix$sampl
 names(file_names) = design_matrix$sample_id
 
 #Convert transcript data to suitable format for tximport
-tx2gene = dplyr::select(transcript_data, ensembl_gene_id, ensembl_transcript_id, transcript_version) %>% 
-  dplyr::mutate(TXNAME = paste(ensembl_transcript_id, transcript_version, sep = ".")) %>% 
-  dplyr::transmute(TXNAME,gene_id = ensembl_gene_id, transcript_id = ensembl_transcript_id)
+tx2gene = dplyr::select(transcript_data, gene_id, transcript_id, transcript_version) %>% 
+  dplyr::mutate(TXNAME = paste(transcript_id, transcript_version, sep = ".")) %>% 
+  dplyr::transmute(TXNAME,gene_id, transcript_id)
 
 #Import gene-level abundances
-gene_abundances = tximport(file_names, type = "salmon", tx2gene = tx2gene[,1:2], importer = read_tsv, dropInfReps = TRUE)
+gene_abundances = tximport(file_names[1:10], type = "salmon", tx2gene = tx2gene[,1:2], importer = read_tsv, dropInfReps = TRUE)
 mean_by_condition = calculateMean(gene_abundances$abundance, design_matrix, factor = "condition_name")
 filtered_mean = mean_by_condition[rownames(mean_by_condition) %in% filtered_transcscript_data$ensembl_gene_id,]
 expressed_genes = filtered_mean[apply(filtered_mean, 1, max) > 1,]
@@ -37,7 +38,7 @@ expressed_gene_meta = dplyr::filter(tx2gene, gene_id %in% rownames(expressed_gen
   dplyr::select(gene_id, transcript_id)
 
 #Import transcript-level abundances
-tx_abundances = tximport(file_names, type = "salmon", txOut = TRUE, reader = read_tsv, ignoreTxVersion = TRUE)
+tx_abundances = tximport(file_names, type = "salmon", txOut = TRUE, importer = read_tsv, dropInfReps = TRUE, ignoreTxVersion = TRUE)
 tx_names = data_frame(tx_ids = rownames(tx_abundances$abundance)) %>% tidyr::separate(tx_ids, c("transcript_id", "ver"), sep = "\\.")
 
 #Filter abundances
@@ -59,7 +60,7 @@ length_filtered = length[expressed_gene_meta$transcript_id,]
 abundance_ratios = calculateTranscriptRatios(abundances_filtered, expressed_gene_meta)
 
 #Prepare sample metadata
-sample_metadata = readRDS("macrophage-gxe-study/data/covariates/compiled_acLDL_metadata.rds")
+sample_metadata = readRDS("analysis/data/covariates/compiled_acLDL_metadata.rds")
 sample_meta = dplyr::left_join(design_matrix, sample_metadata, by = c("donor")) %>% as.data.frame()
 rownames(sample_meta) = sample_meta$sample_id
 
@@ -77,4 +78,4 @@ se = SummarizedExperiment::SummarizedExperiment(
   colData = sample_meta, 
   rowData = transcript_metadata)
 
-saveRDS(se, "results/acLDL/acLDL_salmon_ensembl.rds")
+saveRDS(se, "results/SummarizedExperiments/acLDL_salmon_ensembl.rds")

@@ -2,7 +2,7 @@ library("dplyr")
 library("readr")
 library("tximport")
 library("devtools")
-library("SummarizedExperment")
+library("SummarizedExperiment")
 load_all("../seqUtils/")
 load_all("analysis/housekeeping/")
 

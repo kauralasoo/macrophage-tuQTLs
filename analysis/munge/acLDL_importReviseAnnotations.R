@@ -4,10 +4,10 @@ library("tximport")
 library("devtools")
 library("SummarizedExperiment")
 load_all("../seqUtils/")
-load_all("macrophage-gxe-study/housekeeping//")
+load_all("analysis/housekeeping/")
 
 #Import Ensembl quant results for references
-ensembl_quants = readRDS("results/acLDL/acLDL_salmon_ensembl.rds")
+ensembl_quants = readRDS("results/SummarizedExperiments/acLDL_salmon_Ensembl_87.rds")
 sample_names = colnames(ensembl_quants)
 
 #Iterate over annotations
@@ -17,7 +17,7 @@ annotations = c("reviseAnnotations.grp_1_contained","reviseAnnotations.grp_1_ups
 annotation_list = idVectorToList(annotations)
 
 #Make lists of file names
-file_names = purrr::map(annotation_list, ~setNames(file.path("processed/acLDL/reviseAnnotations/",., sample_names, "quant.sf"), sample_names))
+file_names = purrr::map(annotation_list, ~setNames(file.path("processed/acLDL/salmon/",., sample_names, "quant.sf"), sample_names))
 
 #Import all transcript abundances
 tx_abundances = purrr::map(file_names, ~tximport(., type = "salmon", txOut = TRUE, 
@@ -60,7 +60,7 @@ se = SummarizedExperiment::SummarizedExperiment(
   colData = colData(ensembl_quants), 
   rowData = gene_names)
 
-saveRDS(se, "results/acLDL/acLDL_salmon_reviseAnnotations.rds")
+saveRDS(se, "results/SummarizedExperiments/acLDL_salmon_revisedAnnotations.rds")
 
 
 

@@ -60,7 +60,7 @@ se = SummarizedExperiment::SummarizedExperiment(
   colData = colData(ensembl_quants), 
   rowData = gene_names)
 
-saveRDS(se, "results/SummarizedExperiments/acLDL_salmon_revisedAnnotations.rds")
+saveRDS(se, "results/SummarizedExperiments/acLDL_salmon_reviseAnnotations.rds")
 
 
 

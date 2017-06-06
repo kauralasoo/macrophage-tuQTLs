@@ -9,5 +9,5 @@ echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importL
 
 #Import transcript quants for Salmonella data
 echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importTranscriptExpression --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/salmonella_importTranscriptExpression.R"
-echo "test" | python ~/software/utils/submitJobs.py --MEM 12000 --jobname importReviseAnnotations --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/salmonella_importReviseAnnotations.R"
+echo "test" | python ~/software/utils/submitJobs.py --MEM 28000 --jobname importReviseAnnotations --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/salmonella_importReviseAnnotations.R"
 echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importLeafCutter --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/salmonella_importLeafCutter.R"

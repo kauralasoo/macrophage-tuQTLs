@@ -2,3 +2,5 @@ processed
 FarmOut
 .snakemake
 .Rproj.user
+results
+.Rhistory

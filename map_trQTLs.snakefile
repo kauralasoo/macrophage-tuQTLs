@@ -4,7 +4,7 @@ rule map_qtls:
 		expand("processed/{{study}}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
 		expand("processed/{{study}}/qtltools/output//{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi", annot_type = config["annot_type"], condition = config["conditions"])
 	output:
-		"processed/{study}/qtltools/output/out.txt"
+		"processed/{study}/out.txt"
 	resources:
 		mem = 100
 	threads: 1

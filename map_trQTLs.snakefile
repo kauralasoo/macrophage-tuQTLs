@@ -1,13 +1,10 @@
-configfile: "acLDL/acLDL_config.yaml"
-
-
 rule map_qtls:
 	input:
-		expand("processed/acLDL/fastqtl_output/{annot_type}/{condition}.permuted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
-		expand("processed/acLDL/fastqtl_output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
-		expand("processed/acLDL/fastqtl_output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi", annot_type = config["annot_type"], condition = config["conditions"])
+		expand("processed/{{study}}/qtltools/output/{annot_type}/{condition}.permuted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
+		expand("processed/{{study}}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
+		expand("processed/{{study}}/qtltools/output//{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi", annot_type = config["annot_type"], condition = config["conditions"])
 	output:
-		"processed/acLDL/fastqtl_output/out.txt"
+		"processed/{study}/qtltools/output/out.txt"
 	resources:
 		mem = 100
 	threads: 1
@@ -17,10 +14,10 @@ rule map_qtls:
 #Compres and index input bed file
 rule compress_bed:
 	input:
-		bed = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.norm_prop.txt"
+		bed = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt"
 	output:
-		bed = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.norm_prop.txt.gz",
-		bed_index = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.norm_prop.txt.gz.tbi"
+		bed = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz",
+		bed_index = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz.tbi"
 	threads: 1
 	resources:
 		mem = 100
@@ -30,12 +27,12 @@ rule compress_bed:
 #Run QTLtools in permutation mode
 rule permutation_run:
 	input:
-		bed = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.norm_prop.txt.gz",
-		bed_index = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.norm_prop.txt.gz.tbi",
-		covariates = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.covariates_prop.txt",
+		bed = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz",
+		bed_index = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz.tbi",
+		covariates = "processed/{study}/qtltools/input/{annot_type}/{condition}.covariates_prop.txt",
 		vcf = config["qtl_vcf"]
 	output:
-		temp("processed/acLDL/fastqtl_output/{annot_type}/batches/{condition}.permutation.batch.{batch}.{n_batches}.txt")
+		temp("processed/{study}/qtltools/output/{annot_type}/batches/{condition}.permutation.batch.{batch}.{n_batches}.txt")
 	params:
 		chunk = "{batch} {n_batches}"
 	threads: 1
@@ -48,11 +45,11 @@ rule permutation_run:
 #Merge all batches from QTLtools
 rule merge_permutation_batches:
 	input:
-		expand("processed/acLDL/fastqtl_output/{{annot_type}}/batches/{{condition}}.permutation.batch.{batch}.{n_batches}.txt", 
+		expand("processed/{{study}}/qtltools/output/{{annot_type}}/batches/{{condition}}.permutation.batch.{batch}.{n_batches}.txt", 
 			batch=[i for i in range(1, config["n_batches"] + 1)],
 			n_batches = config["n_batches"])
 	output:
-		"processed/acLDL/fastqtl_output/{annot_type}/{condition}.permuted.txt.gz"
+		"processed/{study}/qtltools/output/{annot_type}/{condition}.permuted.txt.gz"
 	resources:
 		mem = 100
 	threads: 1
@@ -63,12 +60,12 @@ rule merge_permutation_batches:
 #Run QTLtools in nominal mode
 rule nominal_run:
 	input:
-		bed = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.norm_prop.txt.gz",
-		bed_index = "processed/acLDL/fastqtl_splicing/{annot_type}/AcLDL.norm_prop.txt.gz.tbi",
-		covariates = "processed/acLDL/fastqtl_splicing/{annot_type}/{condition}.covariates_prop.txt",
+		bed = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz",
+		bed_index = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz.tbi",
+		covariates = "processed/{study}/qtltools/input/{annot_type}/{condition}.covariates_prop.txt",
 		vcf = config["qtl_vcf"]
 	output:
-		temp("processed/acLDL/fastqtl_output/{annot_type}/nominal_batches/{condition}.nominal.batch.{batch}.{n_batches}.txt")
+		temp("processed/{study}/qtltools/output/{annot_type}/nominal_batches/{condition}.nominal.batch.{batch}.{n_batches}.txt")
 	params:
 		chunk = "{batch} {n_batches}"
 	threads: 1
@@ -80,11 +77,11 @@ rule nominal_run:
 #Merge all batches from QTLtools
 rule merge_nominal_batches:
 	input:
-		expand("processed/acLDL/fastqtl_output/{{annot_type}}/nominal_batches/{{condition}}.nominal.batch.{batch}.{n_batches}.txt", 
+		expand("processed/{{study}}/qtltools/output/{{annot_type}}/nominal_batches/{{condition}}.nominal.batch.{batch}.{n_batches}.txt", 
 			batch=[i for i in range(1, config["n_batches"] + 1)],
 			n_batches = config["n_batches"])
 	output:
-		"processed/acLDL/fastqtl_output/{annot_type}/{condition}.nominal.txt.gz"
+		"processed/{study}/qtltools/output/{annot_type}/{condition}.nominal.txt.gz"
 	resources:
 		mem = 100
 	threads: 1
@@ -94,9 +91,9 @@ rule merge_nominal_batches:
 #Add SNP coordinates to QTLTools output file
 rule sort_qtltools_output:
 	input:
-		"processed/acLDL/fastqtl_output/{annot_type}/{condition}.nominal.txt.gz"
+		"processed/{study}/qtltools/output/{annot_type}/{condition}.nominal.txt.gz"
 	output:
-		"processed/acLDL/fastqtl_output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz"
+		"processed/{study}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz"
 	resources:
 		mem = 1000
 	threads: 2
@@ -106,9 +103,9 @@ rule sort_qtltools_output:
 #Tabix-index QTLtools output files
 rule index_qtltools_output:
 	input:
-		"processed/acLDL/fastqtl_output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz"
+		"processed/{study}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz"
 	output:
-		"processed/acLDL/fastqtl_output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi"
+		"processed/{study}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi"
 	resources:
 		mem = 1000
 	threads: 1

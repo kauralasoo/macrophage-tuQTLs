@@ -16,8 +16,8 @@ rule compress_bed:
 	input:
 		bed = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt"
 	output:
-		bed = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz",
-		bed_index = "processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz.tbi"
+		bed = protected("processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz"),
+		bed_index = protected("processed/{study}/qtltools/input/{annot_type}/{condition}.norm_prop.txt.gz.tbi")
 	threads: 1
 	resources:
 		mem = 100

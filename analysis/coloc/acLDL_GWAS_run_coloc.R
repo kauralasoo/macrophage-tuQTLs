@@ -42,7 +42,7 @@ gwas_stats_labeled = readr::read_tsv("analysis/data/gwas/GWAS_summary_stat_list.
 #Specify list of phenotypes
 phenotype_list = list(
   #Ensembl 87 trQTLs
-  ensembl_87 = list(
+  Ensembl_87 = list(
     min_pvalues = list(Ctrl = importQTLtoolsTable("processed/acLDL/qtltools/output/Ensembl_87/Ctrl.permuted.txt.gz"), 
                        AcLDL = importQTLtoolsTable("processed/acLDL/qtltools/output/Ensembl_87/AcLDL.permuted.txt.gz")) %>%
       purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),

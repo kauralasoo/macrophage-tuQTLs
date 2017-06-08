@@ -2,9 +2,9 @@ configfile: "acLDL/acLDL_config.yaml"
 
 rule run_all:
 	input:
-		expand("processed/acLDL/coloc/{gwas}.{phenotype}.{coloc_window}.txt", gwas = config["gwas_traits"], phenotype = config["coloc_phenotypes"], coloc_window = config["coloc_window"])
+		expand("processed/{{study}}/coloc/{gwas}.{phenotype}.{coloc_window}.txt", gwas = config["gwas_traits"], phenotype = config["coloc_phenotypes"], coloc_window = config["coloc_window"])
 	output:
-		"processed/acLDL/coloc_out.txt"
+		"processed/{study}/coloc_out.txt"
 	resources:
 		mem = 100
 	threads: 1
@@ -14,17 +14,18 @@ rule run_all:
 #Run coloc accross inflammatory traits
 rule run_coloc:
 	input:
-		"processed/acLDL/fastqtl_output/{phenotype}/sorted/Ctrl.nominal.sorted.txt.gz"
+		"processed/{study}/qtltools/output/{phenotype}/sorted"
 	output:
-		"processed/acLDL/coloc/{gwas}.{phenotype}.{coloc_window}.txt"
+		"processed/{study}/coloc/{gwas}.{phenotype}.{coloc_window}.txt"
 	params:
 		outdir = "processed/acLDL/coloc",
 		phenotype = "{phenotype}",
 		gwas = "{gwas}",
 		coloc_window = "{coloc_window}"
+
 	resources:
 		mem = 6000
 	threads: 1
 	shell:
-		"/software/R-3.3.0/bin/Rscript acLDL/GWAS_overlaps/GWAS_run_coloc.R --phenotype {wildcards.phenotype} --window {wildcards.coloc_window} "
+		"/software/R-3.4.0/bin/Rscript analysis/coloc/{wildcards.study}_GWAS_run_coloc.R --phenotype {wildcards.phenotype} --window {wildcards.coloc_window} "
 		"--gwas {wildcards.gwas} --dir {config[gwas_dir]} --outdir {params.outdir}"

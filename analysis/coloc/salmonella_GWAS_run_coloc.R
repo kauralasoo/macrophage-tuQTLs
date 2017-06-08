@@ -52,7 +52,7 @@ phenotype_list = list(
                             IFNg = "processed/salmonella/qtltools/output/Ensembl_87/sorted/IFNg.nominal.sorted.txt.gz",
                             SL1344 = "processed/salmonella/qtltools/output/Ensembl_87/sorted/SL1344.nominal.sorted.txt.gz",
                             IFNg_SL1344 = "processed/salmonella/qtltools/output/Ensembl_87/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(Ctrl = 84, AcLDL = 84)
+    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
   ),
   reviseAnnotations = list(
     min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations/naive.permuted.txt.gz"),
@@ -64,7 +64,7 @@ phenotype_list = list(
                             IFNg = "processed/salmonella/qtltools/output/reviseAnnotations/sorted/IFNg.nominal.sorted.txt.gz",
                             SL1344 = "processed/salmonella/qtltools/output/reviseAnnotations/sorted/SL1344.nominal.sorted.txt.gz",
                             IFNg_SL1344 = "processed/salmonella/qtltools/output/reviseAnnotations/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(Ctrl = 84, AcLDL = 84)
+    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
   ),
   leafcutter = list(
     min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/naive.permuted.txt.gz"),
@@ -76,7 +76,7 @@ phenotype_list = list(
                             IFNg = "processed/salmonella/qtltools/output/leafcutter/sorted/IFNg.nominal.sorted.txt.gz",
                             SL1344 = "processed/salmonella/qtltools/output/leafcutter/sorted/SL1344.nominal.sorted.txt.gz",
                             IFNg_SL1344 = "processed/salmonella/qtltools/output/leafcutter/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(Ctrl = 84, AcLDL = 84)
+    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
   )
 )
 

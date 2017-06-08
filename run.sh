@@ -17,4 +17,5 @@ snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile proc
 snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/acLDL/out.txt --jobs 100 --configfile configs/acLDL_trQTL_config.yaml
 
 #Run coloc against all QTLs
-snakemake --cluster scripts/snakemake_submit.py -np -s acLDL_run_coloc.snakefile --jobs 500
+snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile processed/salmonella/coloc_out.txt --jobs 500 --configfile configs/salmonella_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile processed/acLDL/coloc_out.txt --jobs 500 --configfile configs/acLDL_trQTL_config.yaml

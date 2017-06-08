@@ -81,7 +81,7 @@ rule merge_nominal_batches:
 			batch=[i for i in range(1, config["n_batches"] + 1)],
 			n_batches = config["n_batches"])
 	output:
-		"processed/{study}/qtltools/output/{annot_type}/{condition}.nominal.txt.gz"
+		temp("processed/{study}/qtltools/output/{annot_type}/{condition}.nominal.txt.gz")
 	resources:
 		mem = 100
 	threads: 1
@@ -93,7 +93,7 @@ rule sort_qtltools_output:
 	input:
 		"processed/{study}/qtltools/output/{annot_type}/{condition}.nominal.txt.gz"
 	output:
-		"processed/{study}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz"
+		protected("processed/{study}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz")
 	resources:
 		mem = 1000
 	threads: 2

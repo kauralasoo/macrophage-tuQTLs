@@ -1,5 +1,3 @@
-configfile: "acLDL/acLDL_config.yaml"
-
 rule run_all:
 	input:
 		expand("processed/{{study}}/coloc/{gwas}.{phenotype}.{coloc_window}.txt", gwas = config["gwas_traits"], phenotype = config["coloc_phenotypes"], coloc_window = config["coloc_window"])

@@ -22,7 +22,7 @@ rule run_coloc:
 		coloc_window = "{coloc_window}"
 
 	resources:
-		mem = 6000
+		mem = 12000
 	threads: 1
 	shell:
 		"/software/R-3.4.0/bin/Rscript analysis/coloc/{wildcards.study}_GWAS_run_coloc.R --phenotype {wildcards.phenotype} --window {wildcards.coloc_window} "

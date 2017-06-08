@@ -16,7 +16,7 @@ rule run_coloc:
 	output:
 		"processed/{study}/coloc/{gwas}.{phenotype}.{coloc_window}.txt"
 	params:
-		outdir = "processed/acLDL/coloc",
+		outdir = "processed/{study}/coloc",
 		phenotype = "{phenotype}",
 		gwas = "{gwas}",
 		coloc_window = "{coloc_window}"

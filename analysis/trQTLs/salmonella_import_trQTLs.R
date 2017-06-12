@@ -28,9 +28,17 @@ leafcutter_pvalues = list(
   NI = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/NI.permuted.txt.gz"),
   NS = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/NS.permuted.txt.gz"),
   NIS = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/NIS.permuted.txt.gz"))
+tpm_pvalues = list(
+  naive = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/naive.permuted.txt.gz"),
+  IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/IFNg.permuted.txt.gz"),
+  SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/SL1344.permuted.txt.gz"),
+  IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/IFNg_SL1344.permuted.txt.gz"),
+  NI = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/NI.permuted.txt.gz"),
+  NS = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/NS.permuted.txt.gz"),
+  NIS = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/NIS.permuted.txt.gz"))
 
 #Put all results into a list
-trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues)
+trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues, tpm = tpm_pvalues)
 saveRDS(trQTL_min_pvalue_list, "results/trQTLs/salmonella_trQTL_min_pvalues.rds")
 
 
@@ -42,3 +50,4 @@ ggplot(qq_df, aes(x = -log(p_expected,10), y = -log(p_eigen,10))) +
   theme_light() + 
   xlab("-log10 exptected p-value") + 
   ylab("-log10 observed p-value")
+

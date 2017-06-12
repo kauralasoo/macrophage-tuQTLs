@@ -16,9 +16,14 @@ leafcutter_pvalues = list(
   Ctrl = importQTLtoolsTable("processed/acLDL/qtltools/output/leafcutter/Ctrl.permuted.txt.gz"),
   AcLDL = importQTLtoolsTable("processed/acLDL/qtltools/output/leafcutter/AcLDL.permuted.txt.gz"),
   Diff = importQTLtoolsTable("processed/acLDL/qtltools/output/leafcutter/Diff.permuted.txt.gz"))
+tpm_pvalues = list(
+  Ctrl = importQTLtoolsTable("processed/acLDL/qtltools/output/tpm/Ctrl.permuted.txt.gz"),
+  AcLDL = importQTLtoolsTable("processed/acLDL/qtltools/output/tpm/AcLDL.permuted.txt.gz"),
+  Diff = importQTLtoolsTable("processed/acLDL/qtltools/output/tpm/Diff.permuted.txt.gz"))
 
 #Put all results into a list
-trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues)
+trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, 
+                             leafcutter = leafcutter_pvalues, tpm = tpm_pvalues)
 saveRDS(trQTL_min_pvalue_list, "results/trQTLs/acLDL_trQTL_min_pvalues.rds")
 
 

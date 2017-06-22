@@ -16,8 +16,11 @@ echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importT
 
 #Map trQTLs
 snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/salmonella/out.txt --jobs 200 --configfile configs/salmonella_trQTL_config.yaml
-snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/acLDL/out.txt --jobs 100 --configfile configs/acLDL_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/acLDL/out.txt --jobs 1200 --configfile configs/acLDL_trQTL_config.yaml
 
 #Run coloc against all QTLs
 snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile processed/salmonella/coloc_out.txt --jobs 500 --configfile configs/salmonella_trQTL_config.yaml
 snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile processed/acLDL/coloc_out.txt --jobs 500 --configfile configs/acLDL_trQTL_config.yaml
+
+#Convert revised GFFs into a single GRangesList object
+echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importGFFs --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/importRevisedGFFs.R"

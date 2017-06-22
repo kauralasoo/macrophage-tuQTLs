@@ -163,6 +163,31 @@ rule leafcutter_cluster_junctions:
 		"ls --color=never {params.out_prefix}/junc/*.junc | cat > {params.junc_files} && "
 		"python {config[leafcutter_root]}/clustering/leafcutter_cluster.py -j {params.junc_files} -r {params.out_prefix} -m 50 -l 500000"
 
+#Sort BAMs by name
+rule sort_bam_by_name:
+	input:
+		bam = "processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam"
+	output:
+		bam = "processed/{study}/sorted_bam/{sample}.Aligned.sortedByName.out.bam"
+	threads: 6
+	resourecs:
+		mem = 4000
+	shell:
+		"samtools sort -n -m 3500M -o {output.bam} -O BAM --threads 5 {input.bam}"
+
+
+#Quantify expression using featureCounts
+rule quantify_featureCounts:
+	input:
+		bam = "processed/{study}/sorted_bam/{sample}.Aligned.sortedByName.out.bam"
+	output:
+		counts = "processed/{study}/featureCounts/{sample}.featureCounts.txt"
+	threads: 1
+	resources:
+		mem = 1000
+	shell:
+		"featureCounts -p -C -D 5000 -d 50 --donotsort -a {config[ensembl_gtf]} -o {output.counts} {input.bam}"
+
 
 #Make sure that all final output files get created
 rule make_all:

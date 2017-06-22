@@ -166,14 +166,14 @@ rule leafcutter_cluster_junctions:
 #Sort BAMs by name
 rule sort_bam_by_name:
 	input:
-		bam = "processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam"
+		"processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam"
 	output:
-		bam = "processed/{study}/sorted_bam/{sample}.Aligned.sortedByName.out.bam"
+		temp("processed/{study}/sorted_bam/{sample}.Aligned.sortedByName.out.bam")
 	threads: 6
-	resourecs:
-		mem = 4000
+	resources:
+		mem = 8000
 	shell:
-		"samtools sort -n -m 3500M -o {output.bam} -O BAM --threads 5 {input.bam}"
+		"samtools sort -n -m 1000M -o {output} -O BAM --threads 5 {input}"
 
 
 #Quantify expression using featureCounts
@@ -195,6 +195,7 @@ rule make_all:
 		expand("processed/{study}/verifyBamID/{sample}.verifyBamID.bestSM", study = config["study"], sample=config["samples"]),
 		expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
 		expand("processed/{study}/salmon/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"]),
+		expand("processed/{study}/featureCounts/{sample}.featureCounts.txt", study = config["study"], sample=config["samples"]),
 		"processed/{study}/leafcutter/leafcutter_perind.counts.gz"
 	output:
 		"processed/{study}/out.txt"

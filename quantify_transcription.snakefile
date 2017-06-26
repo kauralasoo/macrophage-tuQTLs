@@ -182,7 +182,7 @@ rule quantify_featureCounts:
 		bam = "processed/{study}/sorted_bam/{sample}.Aligned.sortedByName.out.bam"
 	output:
 		counts = "processed/{study}/featureCounts/{sample}.featureCounts.txt",
-		temp(summary = "processed/{study}/featureCounts/{sample}.featureCounts.txt.summary")
+		summary = temp("processed/{study}/featureCounts/{sample}.featureCounts.txt.summary")
 	threads: 1
 	resources:
 		mem = 1000

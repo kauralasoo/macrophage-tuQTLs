@@ -89,6 +89,18 @@ phenotype_list = list(
                             SL1344 = "processed/salmonella/qtltools/output/tpm/sorted/SL1344.nominal.sorted.txt.gz",
                             IFNg_SL1344 = "processed/salmonella/qtltools/output/tpm/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
     sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
+  ),
+  featureCounts = list(
+    min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/naive.permuted.txt.gz"),
+                       IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/IFNg.permuted.txt.gz"),
+                       SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/SL1344.permuted.txt.gz"),
+                       IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/IFNg_SL1344.permuted.txt.gz")) %>%
+      purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),
+    qtl_summary_list = list(naive = "processed/salmonella/qtltools/output/featureCounts/sorted/naive.nominal.sorted.txt.gz",
+                            IFNg = "processed/salmonella/qtltools/output/featureCounts/sorted/IFNg.nominal.sorted.txt.gz",
+                            SL1344 = "processed/salmonella/qtltools/output/featureCounts/sorted/SL1344.nominal.sorted.txt.gz",
+                            IFNg_SL1344 = "processed/salmonella/qtltools/output/featureCounts/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
+    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
   )
 )
 

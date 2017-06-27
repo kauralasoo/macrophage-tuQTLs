@@ -73,6 +73,14 @@ phenotype_list = list(
     qtl_summary_list = list(Ctrl = "processed/acLDL/qtltools/output/tpm/sorted/Ctrl.nominal.sorted.txt.gz",
                             AcLDL = "processed/acLDL/qtltools/output/tpm/sorted/AcLDL.nominal.sorted.txt.gz"),
     sample_sizes = list(Ctrl = 70, AcLDL = 70)
+  ),
+  featureCounts = list(
+    min_pvalues = list(Ctrl = importQTLtoolsTable("processed/acLDL/qtltools/output/featureCounts/Ctrl.permuted.txt.gz"), 
+                       AcLDL = importQTLtoolsTable("processed/acLDL/qtltools/output/featureCounts/AcLDL.permuted.txt.gz")) %>%
+      purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),
+    qtl_summary_list = list(Ctrl = "processed/acLDL/qtltools/output/featureCounts/sorted/Ctrl.nominal.sorted.txt.gz",
+                            AcLDL = "processed/acLDL/qtltools/output/featureCounts/sorted/AcLDL.nominal.sorted.txt.gz"),
+    sample_sizes = list(Ctrl = 70, AcLDL = 70)
   )
 )
 

@@ -23,4 +23,4 @@ snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile proce
 snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile processed/acLDL/coloc_out.txt --jobs 500 --configfile configs/acLDL_trQTL_config.yaml
 
 #Convert revised GFFs into a single GRangesList object
-echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importGFFs --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/importRevisedGFFs.R"
+echo "test" | python ~/software/utils/submitJobs.py --MEM 28000 --jobname importGFFs --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/importRevisedGFFs.R"

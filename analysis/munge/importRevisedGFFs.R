@@ -16,4 +16,4 @@ gff_list = list(up1 = rtracklayer::import.gff3("processed/annotations/gff/revise
 granges_lists = purrr::map(gff_list, ~reviseAnnotations::revisedGffToGrangesList(.)) %>% 
   purrr::flatten() %>% 
   GRangesList()
-saveRDS(granges_lists, "results/reviseAnnotations/reviseAnnotations.GRangesList.rds")
+saveRDS(granges_lists, "results/annotations/reviseAnnotations.GRangesList.rds")

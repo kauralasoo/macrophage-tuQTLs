@@ -14,6 +14,7 @@ se_ensembl = readRDS("results/SummarizedExperiments/acLDL_salmon_Ensembl_87.rds"
 se_reviseAnnotations = readRDS("results/SummarizedExperiments/acLDL_salmon_reviseAnnotations.rds")
 se_leafcutter = readRDS("results/SummarizedExperiments/acLDL_leafcutter_counts.rds")
 se_tpm = readRDS("results/SummarizedExperiments/acLDL_salmon_gene_abundances.rds")
+se_featureCounts = readRDS("results/SummarizedExperiments/acLDL_featureCounts.rds")
 
 #Identify genes in the MHC region that should be excluded
 mhc_ensembl = dplyr::filter(tbl_df2(rowData(se_ensembl)), chr == "6", transcript_start > 28510120, transcript_start < 33480577) %>%
@@ -24,7 +25,8 @@ mhc_leafcutter = dplyr::filter(tbl_df2(rowData(se_leafcutter)), chr == "6", star
   dplyr::rename(phenotype_id = transcript_id)
 mhc_tpm = dplyr::filter(tbl_df2(rowData(se_tpm)), chr == "6", start > 28510120, end < 33480577) %>%
   dplyr::rename(phenotype_id = gene_id)
-
+mhc_featureCounts = dplyr::filter(tbl_df2(rowData(se_featureCounts)), chr == "6", start > 28510120, end < 33480577) %>%
+  dplyr::rename(phenotype_id = gene_id)
 
 #Gene names
 ensembl_name_map = dplyr::select(tbl_df2(rowData(se_ensembl)), transcript_id, gene_name) %>% 
@@ -34,6 +36,8 @@ revised_name_map = dplyr::select(tbl_df2(rowData(se_reviseAnnotations)), transcr
 leafcutter_name_map = dplyr::select(tbl_df2(rowData(se_leafcutter)), transcript_id, gene_name) %>% 
   dplyr::rename(phenotype_id = transcript_id)
 tpm_name_map = dplyr::select(tbl_df2(rowData(se_tpm)), gene_id, gene_name) %>% 
+  dplyr::rename(phenotype_id = gene_id)
+featureCounts_name_map = dplyr::select(tbl_df2(rowData(se_featureCounts)), gene_id, gene_name) %>% 
   dplyr::rename(phenotype_id = gene_id)
 
 #Import GWAS traits
@@ -78,9 +82,17 @@ tpm_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".t
   #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
   dplyr::select(-.row)
 
+featureCounts_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".featureCounts.2e5.txt", 
+                                                    coloc_prefix = "processed/salmonella/coloc/",
+                                                    PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
+                                                    gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_tpm)$coloc_filtered %>%
+  dplyr::left_join(tpm_name_map, by = "phenotype_id") %>%
+  #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
+  dplyr::select(-.row)
+
 #Put all GWAS overlaps into a single list
 gwas_olaps = list(ensembl_87 = ensembl_200kb_hits, revisedAnnotation = revised_200kb_hits, 
-                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits)
+                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, featureCounts = featureCounts_200kb_hits)
 saveRDS(gwas_olaps, "results/coloc/GWAS_coloc_hits.rds")
 gwas_olaps = readRDS("results/coloc/GWAS_coloc_hits.rds")
 
@@ -206,9 +218,10 @@ overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = paste(trait, gene_n
   dplyr::mutate(ensembl_87 = ifelse(is.na(ensembl_87), 0, 1),
                 tpm = ifelse(is.na(tpm), 0, 1),
                 revisedAnnotation = ifelse(is.na(revisedAnnotation), 0, 1),
-                leafcutter = ifelse(is.na(leafcutter), 0, 1))
+                leafcutter = ifelse(is.na(leafcutter), 0, 1),
+                featureCounts = ifelse(is.na(featureCounts), 0, 1))
 
-upset(as.data.frame(overlap_counts), sets = c("tpm", "ensembl_87", "revisedAnnotation", "leafcutter"), sets.bar.color = "#56B4E9",
+upset(as.data.frame(overlap_counts), sets = c("featureCounts","tpm", "ensembl_87", "revisedAnnotation", "leafcutter"), sets.bar.color = "#56B4E9",
       order.by = "freq")
 
 #Count overlaps by quantification strategy (by gene only)
@@ -223,9 +236,11 @@ overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = paste(gene_name, se
   dplyr::mutate(ensembl_87 = ifelse(is.na(ensembl_87), 0, 1),
                 tpm = ifelse(is.na(tpm), 0, 1),
                 revisedAnnotation = ifelse(is.na(revisedAnnotation), 0, 1),
-                leafcutter = ifelse(is.na(leafcutter), 0, 1))
+                leafcutter = ifelse(is.na(leafcutter), 0, 1),
+                featureCounts = ifelse(is.na(featureCounts), 0, 1))
 
 pdf("results/figures/acLDL_GWAS_overlap_UpSetR.pdf", width = 6, height = 5, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("tpm", "ensembl_87", "leafcutter", "revisedAnnotation")), 
+upset(as.data.frame(overlap_counts), sets = rev(c("featureCounts", "ensembl_87", "leafcutter", "revisedAnnotation")), 
       order.by = "freq", keep.order = TRUE)
 dev.off()
+

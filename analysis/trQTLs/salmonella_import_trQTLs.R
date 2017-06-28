@@ -36,9 +36,18 @@ tpm_pvalues = list(
   NI = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/NI.permuted.txt.gz"),
   NS = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/NS.permuted.txt.gz"),
   NIS = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/NIS.permuted.txt.gz"))
+featureCounts_pvalues = list(
+  naive = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/naive.permuted.txt.gz"),
+  IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/IFNg.permuted.txt.gz"),
+  SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/SL1344.permuted.txt.gz"),
+  IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/IFNg_SL1344.permuted.txt.gz"),
+  NI = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/NI.permuted.txt.gz"),
+  NS = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/NS.permuted.txt.gz"),
+  NIS = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/NIS.permuted.txt.gz"))
 
 #Put all results into a list
-trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues, tpm = tpm_pvalues)
+trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues, tpm = tpm_pvalues,
+                             featureCounts = featureCounts_pvalues)
 saveRDS(trQTL_min_pvalue_list, "results/trQTLs/salmonella_trQTL_min_pvalues.rds")
 
 

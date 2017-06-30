@@ -58,14 +58,14 @@ leafcutter_hits = dplyr::semi_join(purrr::map_df(trqtl_min_pvalues$leafcutter, i
   unique()
 
 #Make all coverage plots
-plots_df = purrrlyr::by_row(leafcutter_hits[1:2,], ~makeQTLCoveragePlot(.,str1_df, str2_df, vcf_file$genotypes,
+plots_df = purrrlyr::by_row(leafcutter_hits, ~makeQTLCoveragePlot(.,str1_df, str2_df, vcf_file$genotypes,
                                                                leafcutter_granges, 
                                                                gene_metadata = gene_meta_list$leafcutter,
                                                                plot_fraction = 0.2, coverage_type = "line", 
                                                                rescale_introns = TRUE, heights = c(0.6,0.4)), .to = "plot")
 plots_df_df = dplyr::mutate(plots_df, plot_title = paste(gene_name, snp_id, phenotype_id, sep = "_"))
 plot_list = setNames(plots_df_df$plot, plots_df_df$plot_title)
-savePlotList(plot_list, "processed/acLDL/coloc_plots/coverage/leafcutter/")
+savePlotList(plot_list, "results/coloc/plots/coverage/leafcutter/")
 
 #Visualise reviseAnnotations
 revised_olaps = dplyr::select(gwas_olaps$revisedAnnotation, phenotype_id, snp_id, gene_name) %>% unique()
@@ -94,7 +94,7 @@ ensembl_hits = dplyr::semi_join(purrr::map_df(trqtl_min_pvalues$Ensembl_87, iden
   unique()
 
 #Make all coverage plots
-plots_df = purrr::by_row(ensembl_hits, ~makeQTLCoveragePlot(.,str1_df, str2_df, vcf_file$genotypes,
+plots_df = purrrlyr::by_row(ensembl_hits, ~makeQTLCoveragePlot(.,str1_df, str2_df, vcf_file$genotypes,
                                                             exons,
                                                             gene_metadata = gene_meta_list$Ensembl_87,
                                                             plot_fraction = 0.2, coverage_type = "line", 

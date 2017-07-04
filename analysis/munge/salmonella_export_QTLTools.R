@@ -129,6 +129,53 @@ saveFastqtlMatrices(covariates_list, output_path, file_suffix = "covariates_prop
 
 
 
+#Filter reviseAnnotatons and export again
+se_revised = readRDS("results/SummarizedExperiments/salmonella_salmon_reviseAnnotations.rds")
+event_metadata = rowData(se_revised)
+unique_genes = unique(event_metadata$gene_id)
+
+#Remove events on X and Y chromosomes
+event_dataset = se_revised[event_metadata[!event_metadata$chr %in% c("X","Y","MT"),]$transcript_id,]
+
+#Extract lists for each condition
+condition_list = idVectorToList(c("naive","IFNg","SL1344","IFNg_SL1344"))
+event_conditions = purrr::map(condition_list, ~extractConditionFromSummarizedExperiment(.,event_dataset))
+
+#Rename columns
+event_conditions_renamed = purrr::map(event_conditions, function(x){
+  colnames(x) = x$genotype_id
+  return(x)
+})
+
+#Remove lowly expressed transcripts
+event_conditions_filtered = purrr::map(event_conditions_renamed, removeLowlyExpressedTranscripts)
+
+#Recalculate transcript ratios
+event_metadata = purrr::map(event_conditions_filtered, ~rowData(.) %>% 
+                              tbl_df2() %>%
+                              dplyr::transmute(gene_id = group_id, transcript_id))
+tpms = purrr::map(event_conditions_filtered, ~assays(.)$tpms)
+prop_list = purrr::map2(tpms, event_metadata, ~calculateTranscriptRatios(.x,.y))
+
+#Construct gene positions for QTL mapping
+gene_pos_list = purrr::map(event_conditions_filtered, ~tbl_df2(rowData(.)) %>% 
+  dplyr::filter(transcript_id %in% rownames(event_dataset)) %>%
+  constructQTLtoolsGenePos())
+output_path = "processed/salmonella/qtltools/input/reviseAnnotations_filtered/"
+
+#Quantile normalise and remove NAs
+normalised_list = purrr::map(prop_list, ~replaceNAsWithRowMeans(.) %>% quantileNormaliseRows())
+fastqtl_norm_prop_list = purrr::map2(normalised_list, gene_pos_list, ~prepareQTLtoolsMatrix(.x,.y))
+saveFastqtlMatrices(fastqtl_norm_prop_list, output_path, file_suffix = "norm_prop")
+
+#Calculate covariates
+sample_meta = tbl_df2(colData(event_conditions_renamed$naive))
+covariates_list = purrr::map(normalised_list, 
+                             ~performPCA(., sample_meta, n_pcs = 6, feature_id = "genotype_id")$pca_matrix %>%
+                               dplyr::select(genotype_id, PC1, PC2, PC3, PC4, PC5, PC6) %>%
+                               fastqtlMetadataToCovariates())
+saveFastqtlMatrices(covariates_list, output_path, file_suffix = "covariates_prop")
+
 
 
 #Export LeafCutter counts for QTLtools

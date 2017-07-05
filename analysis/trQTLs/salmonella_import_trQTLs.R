@@ -44,10 +44,18 @@ featureCounts_pvalues = list(
   NI = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/NI.permuted.txt.gz"),
   NS = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/NS.permuted.txt.gz"),
   NIS = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/NIS.permuted.txt.gz"))
+revised_groupwise = list(
+  naive = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations_groupwise/naive.permuted.txt.gz"),
+  IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations_groupwise/IFNg.permuted.txt.gz"),
+  SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations_groupwise/SL1344.permuted.txt.gz"),
+  IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations_groupwise/IFNg_SL1344.permuted.txt.gz"),
+  NI = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations_groupwise/NI.permuted.txt.gz"),
+  NS = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations_groupwise/NS.permuted.txt.gz"),
+  NIS = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations_groupwise/NIS.permuted.txt.gz"))
 
 #Put all results into a list
 trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues, tpm = tpm_pvalues,
-                             featureCounts = featureCounts_pvalues)
+                             featureCounts = featureCounts_pvalues, reviseAnnotations_groupwise = revised_groupwise)
 saveRDS(trQTL_min_pvalue_list, "results/trQTLs/salmonella_trQTL_min_pvalues.rds")
 
 
@@ -59,4 +67,29 @@ ggplot(qq_df, aes(x = -log(p_expected,10), y = -log(p_eigen,10))) +
   theme_light() + 
   xlab("-log10 exptected p-value") + 
   ylab("-log10 observed p-value")
+
+
+#Explore filtering
+se_revised = readRDS("results/SummarizedExperiments/salmonella_salmon_reviseAnnotations.rds")
+metadata = tbl_df2(rowData(se_revised)) %>%
+  dplyr::transmute(phenotype_id = transcript_id, gene_name)
+sample_data = tbl_df2(colData(se_revised))
+tpm_ratios = assays(se_revised)$tpm_ratios
+
+unfiltered_qtls = purrr::map_df(trQTL_min_pvalue_list$reviseAnnotations, identity, .id = "condition_name") %>%
+  dplyr::left_join(metadata, by = "phenotype_id") %>% 
+  dplyr::filter(p_fdr < 0.1)
+filtered_qtls = purrr::map_df(trQTL_min_pvalue_list$reviseAnnotations_filtered, identity, .id = "condition_name") %>%
+  dplyr::left_join(metadata, by = "phenotype_id") %>% 
+  dplyr::filter(p_fdr < 0.1)
+
+dplyr::filter(filtered_qtls, gene_name == "TNFRSF14")$phenotype_id
+dplyr::filter(unfiltered_qtls, gene_name == "TNFRSF14")$phenotype_id
+hist(tpm_ratios["ENSG00000134824.grp_2.contained.ENST00000257261",
+                dplyr::filter(sample_data, condition_name == "IFNg")$sample_id])
+
+
+
+
+
 

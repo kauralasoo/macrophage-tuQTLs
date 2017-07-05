@@ -15,7 +15,7 @@ echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importL
 echo "test" | python ~/software/utils/submitJobs.py --MEM 8000 --jobname importTranscriptExpression --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/salmonella_importGeneExpression.R"
 
 #Map trQTLs
-snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/salmonella/out.txt --jobs 200 --configfile configs/salmonella_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/salmonella/out.txt --jobs 1200 --configfile configs/salmonella_trQTL_config.yaml
 snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/acLDL/out.txt --jobs 1200 --configfile configs/acLDL_trQTL_config.yaml
 
 #Run coloc against all QTLs

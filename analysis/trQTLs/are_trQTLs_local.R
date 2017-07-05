@@ -37,10 +37,11 @@ ifng_qtls = dplyr::left_join(salmonella_qtls$reviseAnnotations_groupwise$IFNg, r
 
 #Count QTLs per group
 best_group = dplyr::group_by(qtls, gene_id, gene_name, group_name) %>% 
+  dplyr::arrange(phenotype_id) %>%
   dplyr::filter(p_fdr < 0.1) %>% 
   dplyr::summarize(qtl_count = length(phenotype_id), min_p = min(p_beta)) %>% 
   ungroup() %>% dplyr::group_by(gene_id) %>% 
-  arrange(gene_id, -qtl_count, min_p) %>% 
+  arrange(gene_id, -qtl_count) %>% 
   dplyr::filter(row_number() == 1) %>% 
   dplyr::ungroup()
 
@@ -50,29 +51,29 @@ best_filtered = dplyr::semi_join(qtls, best_group, by = c("gene_id", "group_name
 p_matrix = dplyr::select(best_filtered, gene_id, gene_name, position, p_beta) %>% 
   tidyr::spread(position, p_beta)
 
-up_down = dplyr::filter(p_matrix, upstream < 0.001, !is.na(downstream))
+up_down = dplyr::filter(p_matrix, upstream < 1e-5, !is.na(downstream))
 1 - qvalue::qvalue(up_down$downstream)$pi0
 
-up_contained = dplyr::filter(p_matrix, upstream < 0.001, !is.na(contained))
+up_contained = dplyr::filter(p_matrix, upstream < 1e-5, !is.na(contained))
 1 - qvalue::qvalue(up_contained$contained)$pi0
 
-down_contained = dplyr::filter(p_matrix, downstream < 0.001, !is.na(contained))
+down_contained = dplyr::filter(p_matrix, downstream < 1e-5, !is.na(contained))
 1 - qvalue::qvalue(down_contained$contained)$pi0
 
-down_up = dplyr::filter(p_matrix, downstream < 0.001, !is.na(upstream))
+down_up = dplyr::filter(p_matrix, downstream < 1e-5, !is.na(upstream))
 1 - qvalue::qvalue(down_up$upstream)$pi0
 
-contained_up = dplyr::filter(p_matrix, contained < 0.001, !is.na(upstream))
+contained_up = dplyr::filter(p_matrix, contained < 1e-5, !is.na(upstream))
 1 - qvalue::qvalue(contained_up$upstream)$pi0
 
-contained_down = dplyr::filter(p_matrix, contained < 0.001, !is.na(downstream))
+contained_down = dplyr::filter(p_matrix, contained < 1e-5, !is.na(downstream))
 1 - qvalue::qvalue(contained_down$downstream)$pi0
 
 
 #Perform Pi1 between conditions
 best_ifng = dplyr::semi_join(ifng_qtls, best_group, by = c("gene_id", "group_name"))
 
-naive_hits = dplyr::filter(best_filtered, p_beta < 0.001)
+naive_hits = dplyr::filter(best_filtered, p_beta < 1e-5)
 ifng_hits = dplyr::semi_join(ifng_qtls, naive_hits, by = "group_id")
 1 - qvalue::qvalue(ifng_hits$p_beta)$pi0
 

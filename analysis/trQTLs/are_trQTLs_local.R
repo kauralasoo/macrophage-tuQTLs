@@ -63,6 +63,29 @@ calculateLeafCutterPi1 <- function(pvalues_df, leafcutter_names, p_threshold, ma
   return(pi1_df)
 }
 
+calculateRevisedPi1 <- function(best_pvalues, p_threshold){
+  
+  #Reorder pvalues
+  best_pvalues = dplyr::arrange(best_pvalues, phenotype_id)
+
+  group_pairs = dplyr::select(best_pvalues, gene_id, group_id) %>%
+    dplyr::group_by(gene_id) %>% 
+    dplyr::mutate(group_size = length(group_id)) %>%
+    dplyr::filter(group_size > 1) %>%
+    dplyr::select(-group_size) %>%
+    purrrlyr::by_slice(~constructCombinatorialPairs(.$group_id), .collate = "rows")
+  
+  #Add first and second p-values
+  p_df = dplyr::left_join(group_pairs, dplyr::transmute(best_pvalues, first = group_id, p_beta_first = p_beta), by = "first") %>%
+    dplyr::left_join(dplyr::transmute(best_pvalues, second = group_id, p_beta_second = p_beta), by = "second")
+
+  lc_pi1_first = 1-qvalue::qvalue(dplyr::filter(p_df, p_beta_first < p_threshold)$p_beta_second)$pi0
+  lc_pi1_second = 1-qvalue::qvalue(dplyr::filter(p_df, p_beta_second < p_threshold)$p_beta_first)$pi0
+  pi1_df = dplyr::data_frame(comparison = c("first_second", "second_first"), pi1 = c(lc_pi1_first, lc_pi1_second))
+  
+  return(pi1_df)
+}
+
 calculateConditionsPi1 <- function(pvalues_list, p_threshold = 1e-5){
   
   #Find all hits
@@ -149,15 +172,23 @@ pi1_positions_plot = ggplot(position_pi1_df, aes(x = comparison, y = pi1)) +
   scale_y_continuous(limits = c(0,1))
 ggsave("results/figures/pi1_position_plot.pdf",plot = pi1_positions_plot, width = 5, height = 4)
 
+#Calculate pi1 between all reviseAnnotation pairs
+pi1_df = purrr::map_df(best_filtered, ~calculateRevisedPi1(., p_threshold = 0.01), .id = "condition_name") %>%
+  dplyr::mutate(method = "reviseAnnotations")
 
 #### leafcutter ####
 leafcutter_pi1_df = purrr::map_df(salmonella_qtls$leafcutter[1:4], 
-                                  ~calculateLeafCutterPi1(., leafcutter_names, p_threshold = 0.001, max_cluster_count = 4), .id = "condition_name")
-pi1_leafcutter_plot = ggplot(leafcutter_pi1_df, aes(x = "Pi1", y = pi1)) + 
+                                  ~calculateLeafCutterPi1(., leafcutter_names, p_threshold = 0.001, max_cluster_count = 4), .id = "condition_name") %>%
+  dplyr::mutate(method = "leafcutter")
+
+#Make a joint plot
+joint_pi1_df = dplyr::bind_rows(pi1_df, leafcutter_pi1_df)
+
+pi1_position_plot = ggplot(joint_pi1_df, aes(x = method, y = pi1)) + 
   geom_boxplot() +
   geom_point() + 
   scale_y_continuous(limits = c(0,1))
-ggsave("results/figures/pi1_leafcutter_plot.pdf",plot = pi1_leafcutter_plot, width = 2, height = 4)
+ggsave("results/figures/pi1_position_plot_pairwise.pdf",plot = pi1_position_plot, width = 5, height = 4)
 
 
 

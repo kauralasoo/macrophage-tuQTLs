@@ -23,13 +23,13 @@ rule star_align:
 		bam = "processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam"
 	params:
 		prefix = "processed/{study}/STAR/{sample}/{sample}.",
-		rg = "ID:1\tLB:1\tPL:Illumina\tSM:{sample}\tPU:1"
+		rg = 'ID:1 \"LB:1\tPL:Illumina\tSM:{sample}\tPU:1\"'
 	resources:
 		mem = 42000
 	threads: 8
 	shell:
 		"STAR --runThreadN {threads} --outSAMtype BAM SortedByCoordinate --outWigType bedGraph "
-		"--outWigNorm None --outWigStrand Stranded --outSAMattrRGline \"{params.rg}\" "
+		"--outWigNorm None --outWigStrand Stranded --outSAMattrRGline {params.rg} "
 		"--readFilesCommand zcat --genomeDir {config[star_index]} --limitBAMsortRAM 32000000000 "
 		"--outFileNamePrefix {params.prefix} --readFilesIn {input.fq1} {input.fq2} "
 

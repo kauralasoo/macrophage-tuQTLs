@@ -190,6 +190,21 @@ rule quantify_featureCounts:
 		"featureCounts -p -C -D 5000 -d 50 --donotsort -a {config[ensembl_gtf]} -o {output.counts} {input.bam}"
 
 
+#Quantify allele-specific expression
+rule count_ASE:
+	input:
+		bam = "processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam"
+	output:
+		counts = "processed/{study}/ASEcounts/{sample}.ASEcounts"
+	resources:
+		mem = 6000
+	threads: 1
+	params:
+		gatk_command = "/software/java/bin/java -jar -Xmx4g ~/software/GenomeAnalysisTK.jar"
+	shell:
+		"{params.gatk_command} -T ASEReadCounter -R {config[fasta]} -I {input.bam} -o {output.counts} -sites {config[ase_vcf]} -U ALLOW_N_CIGAR_READS -dt NONE --minMappingQuality 10 -rf MateSameStrand"
+
+
 #Make sure that all final output files get created
 rule make_all:
 	input:
@@ -197,6 +212,7 @@ rule make_all:
 		expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
 		expand("processed/{study}/salmon/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"]),
 		expand("processed/{study}/featureCounts/{sample}.featureCounts.txt", study = config["study"], sample=config["samples"]),
+		expand("processed/{study}/ASEcounts/{sample}.ASEcounts", study = config["study"], sample=config["samples"]),
 		"processed/{study}/leafcutter/leafcutter_perind.counts.gz"
 	output:
 		"processed/{study}/out.txt"

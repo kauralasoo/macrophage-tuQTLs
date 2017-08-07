@@ -194,6 +194,7 @@ rule quantify_featureCounts:
 rule count_ASE:
 	input:
 		bam = "processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam"
+		index = "processed/{study}/STAR/{sample}/{sample}.Aligned.sortedByCoord.out.bam.bai"
 	output:
 		counts = "processed/{study}/ASEcounts/{sample}.ASEcounts"
 	resources:

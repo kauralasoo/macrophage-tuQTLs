@@ -198,10 +198,10 @@ rule count_ASE:
 	output:
 		counts = "processed/{study}/ASEcounts/{sample}.ASEcounts"
 	resources:
-		mem = 6000
+		mem = 8000
 	threads: 1
 	params:
-		gatk_command = "/software/java/bin/java -jar -Xmx4g ~/software/GenomeAnalysisTK.jar"
+		gatk_command = "/software/java/bin/java -jar -Xmx6g ~/software/GenomeAnalysisTK.jar"
 	shell:
 		"{params.gatk_command} -T ASEReadCounter -R {config[fasta]} -I {input.bam} -o {output.counts} -sites {config[ase_vcf]} -U ALLOW_N_CIGAR_READS -dt NONE --minMappingQuality 10 -rf MateSameStrand"
 

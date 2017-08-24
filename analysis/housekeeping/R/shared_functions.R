@@ -38,7 +38,15 @@ qtlResults <- function(){
   return(result)
 }
 
-figureNames<- function(){
-  data_frame(condition_name = c("naive", "IFNg", "SL1344", "IFNg_SL1344"), 
-             figure_name = factor(c("N","I","S","I+S"), levels = c("N","I","S","I+S")))
-  }
+conditionFriendlyNames<- function(){
+  data_frame(condition_name = c("naive", "IFNg", "SL1344", "IFNg_SL1344", "Ctrl", "AcLDL"), 
+             figure_name = factor(c("N","I","S","I+S", "Ctrl", "AcLDL"), levels = c("N","I","S","I+S", "Ctrl", "AcLDL")))
+}
+
+phenotypeFriendlyNames<- function(){
+    data_frame(quant = c("featureCounts", "Ensembl_87", "leafcutter", "reviseAnnotations"), 
+               phenotype = factor(c("read count", "transcript ratio", "leafCutter", "reviseAnnotations"),
+               levels = c("read count", "transcript ratio", "leafCutter", "reviseAnnotations")))
+}
+
+

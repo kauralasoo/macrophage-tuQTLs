@@ -91,7 +91,7 @@ featureCounts_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_su
   dplyr::select(-.row)
 
 #Put all GWAS overlaps into a single list
-gwas_olaps = list(ensembl_87 = ensembl_200kb_hits, revisedAnnotation = revised_200kb_hits, 
+gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, reviseAnnotations = revised_200kb_hits, 
                   leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, featureCounts = featureCounts_200kb_hits)
 saveRDS(gwas_olaps, "results/coloc/salmonella_GWAS_coloc_hits.rds")
 gwas_olaps = readRDS("results/coloc/salmonella_GWAS_coloc_hits.rds")
@@ -211,7 +211,11 @@ unique_trait_gene_pairs = purrr::map_df(gwas_olaps, identity, .id = "phenotype")
   dplyr::filter(trait != "CAD_2017") %>% 
   dplyr::select(phenotype, trait, gene_name) %>% 
   unique() %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name))
+  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name)) %>%
+  dplyr::rename(quant = phenotype) %>%
+  dplyr::left_join(phenotypeFriendlyNames()) %>%
+  dplyr::select(-quant) %>%
+  dplyr::filter(!is.na(phenotype))
 
 overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = paste(trait, gene_name, sep = "_")) %>% 
   tidyr::spread(phenotype, id) %>%
@@ -229,17 +233,21 @@ unique_trait_gene_pairs = purrr::map_df(gwas_olaps, identity, .id = "phenotype")
   dplyr::filter(trait != "CAD_2017") %>% 
   dplyr::select(phenotype, gene_name) %>% 
   unique() %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name))
+  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name)) %>%
+  dplyr::mutate(gene_name = ifelse(gene_name == "VAMP8;VAMP5", "VAMP8", gene_name)) %>%
+  dplyr::mutate(gene_name = ifelse(gene_name == "APOPT1;RP11-73M18.2", "APOPT1", gene_name)) %>%
+  dplyr::rename(quant = phenotype) %>%
+  dplyr::left_join(phenotypeFriendlyNames()) %>%
+  dplyr::select(-quant) %>%
+  dplyr::filter(!is.na(phenotype), !is.na(gene_name))
 
-overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = paste(gene_name, sep = "_")) %>% 
+overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
   tidyr::spread(phenotype, id) %>%
-  dplyr::mutate(ensembl_87 = ifelse(is.na(ensembl_87), 0, 1),
-                tpm = ifelse(is.na(tpm), 0, 1),
-                revisedAnnotation = ifelse(is.na(revisedAnnotation), 0, 1),
-                leafcutter = ifelse(is.na(leafcutter), 0, 1),
-                featureCounts = ifelse(is.na(featureCounts), 0, 1))
+  dplyr::mutate_at(.cols = vars(2:5), 
+                   .funs = function(x){ifelse(is.na(x), 0,1)}) %>%
+  as.data.frame()
 
-pdf("results/figures/salmonella_GWAS_overlap_UpSetR.pdf", width = 6, height = 5, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("featureCounts", "ensembl_87", "leafcutter", "revisedAnnotation")), 
+pdf("results/figures/salmonella_GWAS_overlap_UpSetR.pdf", width = 6, height = 4, onefile = FALSE)
+upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript ratio", "Leafcutter", "reviseAnnotations")), 
       order.by = "freq", keep.order = TRUE)
 dev.off()

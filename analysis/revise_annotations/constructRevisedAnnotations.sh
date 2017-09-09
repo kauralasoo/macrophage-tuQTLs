@@ -1,0 +1,2 @@
+#Extract transcript tags from the GTF file
+python ../../../../projektid/macrophage-trQTLs/analysis/revise_annotations/extractTranscriptTagsFromGTF.py --GTF Homo_sapiens.GRCh37.87.gtf.gz > Homo_sapiens.GRCh37.87.transcript_tags.txt

@@ -43,13 +43,18 @@ compiled_data = dplyr::left_join(transcript_data, tags_df, by = "ensembl_transcr
   dplyr::mutate(cds_start_end_NF = cds_start_NF + cds_end_NF) %>%
   dplyr::left_join(refseq_ids, by = "ensembl_transcript_id") %>% #Add RefSeq ids
   dplyr::mutate(is_ccds = ifelse(ccds == "", 0, 1)) %>%
-  dplyr::mutate(is_gencode_basic = ifelse(transcript_gencode_basic == "",0,1))
+  dplyr::mutate(is_gencode_basic = ifelse(is.na(transcript_gencode_basic),0,1))
 
 #Count CCDS and GENCODE basic annotations per gene
 compiled_data = dplyr::group_by(compiled_data, ensembl_gene_id) %>% 
-  dplyr::summarize(n_ccds = sum(is_ccds), n_gencode_basic = sum(is_gencode_basic)) %>% 
+  dplyr::summarize(n_ccds = sum(is_ccds), n_gencode_basic = sum(is_gencode_basic, na.rm = T)) %>% 
   dplyr::left_join(compiled_data, by = "ensembl_gene_id")
-saveRDS(compiled_data, "../../annotations/GRCh37/genes/Ensembl_90/Homo_sapiens.GRCh37.90.compiled_tx_metadata.rds")  
+saveRDS(compiled_data, "../../annotations/GRCh37/genes/Ensembl_90/Homo_sapiens.GRCh37.90.compiled_tx_metadata.rds")
+
+#Also write to gzipped file
+gz1 <- gzfile("../../annotations/GRCh37/genes/Ensembl_90/Homo_sapiens.GRCh37.90.compiled_tx_metadata.txt.gz", "w")
+write.table(compiled_data, gz1, sep = "\t", quote = FALSE, row.names = FALSE)
+close(gz1)
 
 #Filter annotations
 valid_chromosomes = c("1","10","11","12","13","14","15","16","17","18","19",

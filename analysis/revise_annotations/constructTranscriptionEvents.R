@@ -14,14 +14,17 @@ option_list <- list(
   make_option(c("-m", "--metadata"), type="character", default=NULL,
               help="Path to gene metadata table.", metavar = "path"),
   make_option(c("-b", "--batch"), type="character", default = "NULL", 
-              help = "Batch id.", metavar = "path")
+              help = "Batch id.", metavar = "path"),
+  make_option(c("-o", "--output"), type="character", default = "NULL", 
+              help = "Path to the output folder.", metavar = "path")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Test options
-opt = list(t = "../../annotations/GRCh37/genes/Ensembl_90/TranscriptDb_GRCh37_90.db", 
-           m = "../../annotations/GRCh37/genes/Ensembl_90/Homo_sapiens.GRCh37.90.compiled_tx_metadata.txt.gz",
-           b = "200 200")
+#opt = list(t = "../../annotations/GRCh37/genes/Ensembl_90/TranscriptDb_GRCh37_90.db", 
+#           m = "../../annotations/GRCh37/genes/Ensembl_90/Homo_sapiens.GRCh37.90.compiled_tx_metadata.txt.gz",
+#           b = "2 10000",
+#           o = "results/reviseAnnotation")
 
 #Import transcript annotations
 gene_metadata = readr::read_tsv(opt$m)
@@ -41,9 +44,10 @@ selection = batches == batch_vector[1]
 gene_ids = gene_ids[selection]
 
 #Set up output file names
-grp1_file = file.path("results/reviseAnnotations", paste0("reviseAnnotations.grp_1.batch_",batch_id, ".gff3"))
-grp2_file = file.path("results/reviseAnnotations", paste0("reviseAnnotations.grp_2.batch_",batch_id, ".gff3"))
-error_file = file.path("results/reviseAnnotations", paste0("failed_genes.batch_",batch_id, ".txt"))
+batch_id = paste(batch_vector, collapse = "_")
+grp1_file = file.path(opt$o, paste0("reviseAnnotations.grp_1.batch_",batch_id, ".gff3"))
+grp2_file = file.path(opt$o, paste0("reviseAnnotations.grp_2.batch_",batch_id, ".gff3"))
+error_file = file.path(opt$o, paste0("failed_genes.batch_",batch_id, ".txt"))
 
 #Only proceed with event construction if there are any genes in the list
 if (length(gene_ids) > 0){
@@ -79,7 +83,7 @@ if (length(gene_ids) > 0){
   write.table(failed_names, error_file, row.names = FALSE, col.names = FALSE, quote = FALSE)
 } else {
   #Make empty output files
-  write.table(c(), grp1_file)
-  write.table(c(), grp2_file)
-  write.table(c(), error_file)
+  write.table(c(), grp1_file, quote = FALSE)
+  write.table(c(), grp2_file, quote = FALSE)
+  write.table(c(), error_file, quote = FALSE)
 }

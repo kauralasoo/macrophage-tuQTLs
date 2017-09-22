@@ -1,0 +1,4 @@
+txdb: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh37/genes/Ensembl_90/TranscriptDb_GRCh37_90.db
+transcript_metadata: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh37/genes/Ensembl_90/Homo_sapiens.GRCh37.90.compiled_tx_metadata.txt.gz 
+outdir: "processed/annotations/reviseAnnotations"
+n_batches: 300

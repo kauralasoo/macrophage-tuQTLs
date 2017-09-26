@@ -5,8 +5,7 @@ rule run_reviseAnnotations:
 		transcript_metadata = config["transcript_metadata"]
 	output:
 		gff1 = "processed/annotations/reviseAnnotations/reviseAnnotations.grp_1.batch_{batch}_{n_batches}.gff3",
-		gff2 = "processed/annotations/reviseAnnotations/reviseAnnotations.grp_2.batch_{batch}_{n_batches}.gff3",
-		failed = "processed/annotations/reviseAnnotations/failed_genes.batch_{batch}_{n_batches}.gff3"
+		gff2 = "processed/annotations/reviseAnnotations/reviseAnnotations.grp_2.batch_{batch}_{n_batches}.gff3"
 	params:
 		out_prefix = "processed/annotations/reviseAnnotations/",
 		chunk = "'{batch} {n_batches}'"

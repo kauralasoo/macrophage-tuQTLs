@@ -1,5 +1,5 @@
 #Construct new transcript annotations using reviseAnnotations
-snakemake --cluster scripts/snakemake_submit.py -np -s reviseAnnotations.snakefile processed/annotations/reviseAnnotations/merged//reviseAnnotations.grp_1.gff3 --jobs 100 --configfile configs/reviseAnnotations_config.yaml
+snakemake --cluster scripts/snakemake_submit.py -np -s reviseAnnotations.snakefile processed/annotations/reviseAnnotations/events/reviseAnnotations.transcript_metadata.txt --jobs 100 --configfile configs/reviseAnnotations_config.yaml
 
 #Quantify gene and transcript expression
 snakemake --cluster scripts/snakemake_submit.py -np -s quantify_transcription.snakefile processed/salmonella/out.txt --jobs 100 --configfile configs/salmonella_trQTL_config.yaml

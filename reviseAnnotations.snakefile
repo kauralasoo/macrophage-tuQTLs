@@ -34,3 +34,18 @@ rule merge_reviseAnnotations_batches:
 	shell:
 		'cat {input.gff1} | grep -v "^#" > {output.gff1} && '
 		'cat {input.gff2} | grep -v "^#" > {output.gff2}'
+
+rule split_gff_to_events:
+	input:
+		gff1 = "processed/annotations/reviseAnnotations/merged/reviseAnnotations.grp_1.gff3",
+		gff2 = "processed/annotations/reviseAnnotations/merged/reviseAnnotations.grp_2.gff3"
+	output:
+		meta = "processed/annotations/reviseAnnotations/events/reviseAnnotations.transcript_metadata.txt"
+	params:
+		out_folder = "processed/annotations/reviseAnnotations/events/"
+	threads: 1
+	resources:
+		mem = 3000
+	shell:
+		"/software/R-3.4.0/bin/Rscript analysis/revise_annotations/splitEventGFFs.R "
+		"-a {input.gff1} -b {input.gff2} -o {params.out_folder}"

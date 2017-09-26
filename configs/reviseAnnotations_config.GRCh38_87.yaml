@@ -1,0 +1,3 @@
+txdb: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/genes/Ensembl_87/TranscriptDb_GRCh37_87.db
+transcript_metadata: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/genes/Ensembl_97/Homo_sapiens.GRCh38.87.compiled_tx_metadata.txt.gz 
+n_batches: 300

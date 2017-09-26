@@ -60,6 +60,11 @@ compiled_data = dplyr::group_by(compiled_data, ensembl_gene_id) %>%
   dplyr::left_join(compiled_data, by = "ensembl_gene_id")
 saveRDS(compiled_data, "../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.compiled_tx_metadata.rds")  
 
+#Also write to gzipped file
+gz1 <- gzfile("../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.compiled_tx_metadata.txt.gz", "w")
+write.table(compiled_data, gz1, sep = "\t", quote = FALSE, row.names = FALSE)
+close(gz1)
+
 #Filter annotations
 valid_chromosomes = c("1","10","11","12","13","14","15","16","17","18","19",
                       "2","20","21","22","3","4","5","6","7","8","9","MT","X","Y")

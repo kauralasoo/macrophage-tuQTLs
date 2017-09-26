@@ -32,5 +32,5 @@ rule merge_reviseAnnotations_batches:
 		mem = 100
 	threads: 1
 	shell:
-		'cat {input.gff1} | grep -v "^#" > output.gff1 &&'
-		'cat {input.gff2} | grep -v "^#" > output.gff2 &&'
+		'cat {input.gff1} | grep -v "^#" > {output.gff1} && '
+		'cat {input.gff2} | grep -v "^#" > {output.gff2}'

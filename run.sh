@@ -28,3 +28,6 @@ snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile proce
 
 #Convert revised GFFs into a single GRangesList object
 echo "test" | python ~/software/utils/submitJobs.py --MEM 28000 --jobname importGFFs --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/munge/importRevisedGFFs.R"
+
+#Estimate variance explained by main vs interaction effects for each condition"
+echo "test" | python ~/software/utils/submitJobs.py --MEM 12000 --jobname varExp --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/trQTLs/estimate_condition_specificity.R"

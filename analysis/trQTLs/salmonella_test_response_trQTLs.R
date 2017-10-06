@@ -20,8 +20,8 @@ qtls = readRDS("results/trQTLs/salmonella_trQTL_min_pvalues.rds")
 vcf_file = readRDS("results/genotypes/salmonella/imputed.86_samples.sorted.filtered.named.rds")
 
 #Define formulas for interaction testing
-formula_qtl = as.formula("expression ~ (1|genotype) + (1|condition_name)")
-formula_interaction = as.formula("expression ~ (1|condition_name) + (1|condition_name:genotype) + (1|genotype)")
+formula_qtl = as.formula("expression ~ genotype + condition_name + (1|donor)")
+formula_interaction = as.formula("expression ~ genotype + condition_name + condition_name:genotype + (1|donor)")
 
 #Define condition pairs
 condition_list = list(IFNg = c("naive", "IFNg"), SL1344 = c("naive", "SL1344"), IFNg_SL1344 = c("naive", "IFNg_SL1344"))
@@ -50,13 +50,15 @@ saveRDS(leafcutter_interaction_res, "results/trQTLs/variance_explained/salmonell
 ###### reviseAnnotations #####
 se_reviseAnnotations = readRDS("results/SummarizedExperiments/salmonella_salmon_reviseAnnotations.rds")
 revised_by_cond = purrr::map(condition_list, ~extractConditionFromSummarizedExperiment(.,se_reviseAnnotations))
+revised_gene_meta = rowData(se_reviseAnnotations) %>% tbl_df2()
+rm(se_reviseAnnotations)
+gc()
 
 #Extract feature matrices
 revised_mat_list = purrr::map(revised_by_cond, ~assays(.)$tpm_ratios %>%
                                 replaceNAsWithRowMeans() %>%
                                 quantileNormaliseRows())
 revised_sample_meta = purrr::map(revised_by_cond, ~colData(.) %>% tbl_df2())
-revised_gene_meta = rowData(se_reviseAnnotations) %>% tbl_df2()
 revised_qtl_list = purrr::map(qtls$reviseAnnotations[c("IFNg", "SL1344", "IFNg_SL1344")], ~dplyr::filter(.,p_fdr < 0.1))
 
 #Test for interactions using fixed effects for genotype but allowing for random effect for paired samples

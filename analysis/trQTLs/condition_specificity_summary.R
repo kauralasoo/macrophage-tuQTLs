@@ -49,8 +49,16 @@ salmonella_fractions = purrr::map(salmonella_varexp_list, ~purrr::map(.,~dplyr::
 acLDL_fractions = purrr::map(acLDL_varexp_list, ~purrr::map(.,~dplyr::mutate(.,interaction_fraction = interaction/(genotype+interaction))))
 
 #Count condition-specific factions
-salmonella_df = purrr::map(salmonella_fractions, ~purrr::map_df(., identity, .id = "condition")) %>% purrr::map_df(identity, .id = "quant") 
-acldl_df = purrr::map(acLDL_fractions, ~purrr::map_df(., identity, .id = "condition")) %>% purrr::map_df(identity, .id = "quant") 
+salmonella_df = purrr::map(salmonella_fractions, ~purrr::map_df(., identity, .id = "condition")) %>% 
+  purrr::map_df(identity, .id = "quant") %>%
+  dplyr::left_join(salmonella_gene_names, by = "phenotype_id")
+saveRDS(salmonella_df, "results/trQTLs/variance_explained/salmonella_compiled_varExp.rds")
+
+acldl_df = purrr::map(acLDL_fractions, ~purrr::map_df(., identity, .id = "condition")) %>% 
+  purrr::map_df(identity, .id = "quant") %>%
+  dplyr::left_join(acldl_gene_names, by = "phenotype_id")
+saveRDS(acldl_df, "results/trQTLs/variance_explained/acLDL_compiled_varExp.rds")
+
 
 salmonella_fraction = dplyr::group_by(salmonella_df, quant, condition) %>% 
   dplyr::mutate(interaction_fraction = ifelse(is.na(interaction_fraction), 0, interaction_fraction)) %>% 

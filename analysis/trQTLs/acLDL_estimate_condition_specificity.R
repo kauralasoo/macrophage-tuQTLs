@@ -9,6 +9,8 @@ load_all("../seqUtils/")
 #Helper functions
 estimateConditionVarianceExplained <- function(qtl_df, trait_matrix, sample_metadata, 
                                                vcf_file, qtl_formula, interaction_fomula){
+  #TODO: Add code to filete the vcf file to speed up interaction testing
+  
   qtl_df = dplyr::select(qtl_df, phenotype_id, snp_id)
   res_df = purrrlyr::by_row(qtl_df, ~testInteractionLme4(.$phenotype_id, .$snp_id, trait_matrix, 
                                                          sample_metadata, vcf_file,

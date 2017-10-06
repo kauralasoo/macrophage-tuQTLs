@@ -120,11 +120,11 @@ a = readRDS("results/trQTLs/variance_explained/salmonella_featureCounts_varExp.r
 
 
 #Visualize a couple of examples
-SPOPL_data = constructQtlPlotDataFrame("3:151219642:151261387:clu_8038", "rs1882017", 
-                                       assays(leafcutter_by_cond$IFNg)$tpm_ratios, 
+SPOPL_data = constructQtlPlotDataFrame("ENSG00000164308.grp_1.contained.ENST00000513084", "rs33934033", 
+                                       assays(revised_by_cond$IFNg)$tpm_ratios, 
                                        vcf_file$genotypes, 
-                                       leadfcutter_sample_meta$IFNg, 
-                                       dplyr::mutate(leafcutter_gene_meta, gene_id = transcript_id)) %>%
+                                       revised_sample_meta$IFNg, 
+                                       dplyr::mutate(revised_gene_meta, gene_id = transcript_id)) %>%
   dplyr::mutate(genotype_text = genotype_value)
 plotQtlCol(SPOPL_data)
 

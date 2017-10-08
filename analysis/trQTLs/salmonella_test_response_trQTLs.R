@@ -102,6 +102,6 @@ fc_qtl_list = purrr::map(qtls$featureCounts[c("IFNg", "SL1344", "IFNg_SL1344")],
 fc_interaction_res = purrr::pmap(list(fc_qtl_list, fc_mat_list, fc_sample_meta),
                                  testInteractionWrapper,
                                  vcf_file, formula_qtl, formula_interaction, id_field_separator = "-", lme4 = TRUE)
-saveRDS(fc_interaction_res, "results/trQTLs/variance_explained/acLDL_featureCounts_interaction_test.rds")
+saveRDS(fc_interaction_res, "results/trQTLs/variance_explained/salmonella_featureCounts_interaction_test.rds")
 
 

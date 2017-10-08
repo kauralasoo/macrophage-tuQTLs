@@ -76,7 +76,8 @@ acldl_gene_names = dplyr::bind_rows(gene_names, acLDL_revised_gene_names, acLDL_
 ##### Import differential expression results #####
 log2FC_list = list(IFNg = readr::read_tsv("results/DE/naive_vs_IFNg_DESeq2_fold_change.txt.gz", col_types = c("ccdddddd")),
                    SL1344 = readr::read_tsv("results/DE/naive_vs_Salmonella_DESeq2_fold_change.txt.gz", col_types = c("ccdddddd")),
-                   IFNg_SL1344 = readr::read_tsv("results/DE/naive_vs_IFNg+Salmonella_DESeq2_fold_change.txt.gz", col_types = c("ccdddddd")))
+                   IFNg_SL1344 = readr::read_tsv("results/DE/naive_vs_IFNg+Salmonella_DESeq2_fold_change.txt.gz", col_types = c("ccdddddd")),
+                   AcLDL = readr::read_tsv("results/DE/Ctrl_vs_AcLDL_DESeq2_fold_change.txt", col_types = c("ccdddddd")))
 log2FC_df = purrr::map_df(log2FC_list, identity, .id = "condition") %>%
   dplyr::select(condition, gene_id, gene_name, log2FoldChange)
 
@@ -103,39 +104,58 @@ salmonella_df = purrr::map(salmonella_fractions, ~purrr::map_df(., identity, .id
   dplyr::left_join(salmonella_test_df, by = c("quant","condition", "phenotype_id","snp_id")) %>%
   dplyr::left_join(log2FC_df, by = c("condition", "gene_id")) %>%
   dplyr::left_join(naive_tpm, by = "gene_id")
-saveRDS(salmonella_df, "results/trQTLs/variance_explained/salmonella_compiled_varExp.rds")
 
 acldl_df = purrr::map(acLDL_fractions, ~purrr::map_df(., identity, .id = "condition")) %>% 
   purrr::map_df(identity, .id = "quant") %>%
   dplyr::left_join(acldl_gene_names, by = "phenotype_id") %>%
   dplyr::left_join(acLDL_test_df, by = c("quant","condition", "phenotype_id","snp_id")) %>%
+  dplyr::left_join(log2FC_df, by = c("condition", "gene_id")) %>%
   dplyr::left_join(naive_tpm, by = "gene_id")
-saveRDS(acldl_df, "results/trQTLs/variance_explained/acLDL_compiled_varExp.rds")
 
 
 ##### Identify trQTLs that are linked to an eQTL of the same gene
 #Salmonella
 vcf_file = readRDS("results/genotypes/salmonella/imputed.86_samples.sorted.filtered.named.rds")
 
-salmonella_eQTLs = dplyr::filter(salmonella_df, quant == "featureCounts") %>% dplyr::transmute(gene_id, eQTL_snp_id = snp_id, condition)
+#Extract eQTL lead variants
+qtls = readRDS("results/trQTLs/salmonella_trQTL_min_pvalues.rds")
+salmonella_eQTLs = purrr::map_df(qtls$featureCounts, identity, .id = "condition") %>% 
+  dplyr::transmute(gene_id = phenotype_id, eQTL_snp_id = snp_id, condition)
+
+#Find linked eQTLs
 trQTLs = dplyr::filter(salmonella_df, quant %in% c("reviseAnnotations", "Ensembl_87","leafcutter")) %>% 
   dplyr::transmute(condition, quant, phenotype_id, gene_id, snp_id) %>% 
   dplyr::left_join(salmonella_eQTLs, by = c("gene_id", "condition")) %>% 
-  dplyr::filter(!is.na(eQTL_snp_id))
+  dplyr::filter(!is.na(eQTL_snp_id)) 
 snp_pairs = dplyr::select(trQTLs, snp_id, eQTL_snp_id) %>% unique()
 pair_r2 = purrrlyr::by_row(snp_pairs, ~calculatePairR2(.$snp_id, .$eQTL_snp_id, vcf_file$genotypes), .to = "R2", .collate = "rows")
+salmonella_r2_df = dplyr::left_join(trQTLs, pair_r2, by = c("snp_id", "eQTL_snp_id")) %>% 
+  dplyr::select(condition, quant, phenotype_id, snp_id, R2)
 
 #AcLDL
 vcf_file = readRDS("results/genotypes/acLDL/imputed.70_samples.sorted.filtered.named.rds")
 
-salmonella_eQTLs = dplyr::filter(acldl_df, quant == "featureCounts") %>% dplyr::transmute(gene_id, eQTL_snp_id = snp_id, condition)
+qtls = readRDS("results/trQTLs/acLDL_trQTL_min_pvalues.rds")
+acLDL_eQTLs = purrr::map_df(qtls$featureCounts, identity, .id = "condition") %>% 
+  dplyr::transmute(gene_id = phenotype_id, eQTL_snp_id = snp_id, condition)
+
 trQTLs = dplyr::filter(acldl_df, quant %in% c("reviseAnnotations", "Ensembl_87","leafcutter")) %>% 
   dplyr::transmute(condition, quant, phenotype_id, gene_id, snp_id) %>% 
-  dplyr::left_join(salmonella_eQTLs, by = c("gene_id", "condition")) %>% 
+  dplyr::left_join(acLDL_eQTLs, by = c("gene_id", "condition")) %>% 
   dplyr::filter(!is.na(eQTL_snp_id))
 snp_pairs = dplyr::select(trQTLs, snp_id, eQTL_snp_id) %>% unique()
 acLDL_pair_r2 = purrrlyr::by_row(snp_pairs, ~calculatePairR2(.$snp_id, .$eQTL_snp_id, vcf_file$genotypes), .to = "R2", .collate = "rows")
+acLDL_r2_df = dplyr::left_join(trQTLs, acLDL_pair_r2, by = c("snp_id", "eQTL_snp_id")) %>% 
+  dplyr::select(condition, quant, phenotype_id, snp_id, R2)
 
+#Add R2 estimates to QTL df
+salmonella_df_r2 = dplyr::left_join(salmonella_df, salmonella_r2_df, by = c("quant","condition","phenotype_id", "snp_id")) %>% 
+  dplyr::mutate(R2 = ifelse(is.na(R2), 0, R2))
+saveRDS(salmonella_df_r2, "results/trQTLs/variance_explained/salmonella_compiled_varExp.rds")
+
+acLDL_df_r2 = dplyr::left_join(acldl_df, acLDL_r2_df, by = c("quant","condition","phenotype_id", "snp_id")) %>% 
+  dplyr::mutate(R2 = ifelse(is.na(R2), 0, R2))
+saveRDS(acLDL_df_r2, "results/trQTLs/variance_explained/acLDL_compiled_varExp.rds")
 
 #Estimate the fraction of QTLs that are condition specific
 salmonella_fraction = dplyr::group_by(salmonella_df, quant, condition) %>% 
@@ -165,10 +185,13 @@ response_fraction_plot = ggplot(fraction_df, aes(x = phenotype, y = interaction_
   xlab("Quantification method")
 ggsave("results/figures/response_fraction_plot.pdf", plot = response_fraction_plot, width = 5, height = 3)
 
-inter_genes = dplyr::filter(salmonella_df, interaction_fraction > 0.5, p_fdr < 0.1, condition == "IFNg_SL1344")
+
+#Explore factors that explain response trQTLs
+inter_genes = dplyr::filter(salmonella_df_r2, interaction_fraction > 0.5, p_fdr < 0.1, condition == "IFNg_SL1344")
 ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_histogram() + facet_wrap(~quant)
+ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_density()
 ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_histogram() + facet_wrap(~quant)
-ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_density()
+ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_density(adjust = 2)
 
 
 

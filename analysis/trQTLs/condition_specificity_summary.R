@@ -187,12 +187,25 @@ ggsave("results/figures/response_fraction_plot.pdf", plot = response_fraction_pl
 
 
 #Explore factors that explain response trQTLs
-inter_genes = dplyr::filter(salmonella_df_r2, interaction_fraction > 0.5, p_fdr < 0.1, condition == "IFNg_SL1344")
+inter_genes = dplyr::filter(salmonella_df_r2, interaction_fraction > 0.5, p_fdr < 0.1, condition == "SL1344")
 ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_histogram() + facet_wrap(~quant)
 ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_density()
 ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_histogram() + facet_wrap(~quant)
 ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_density(adjust = 2)
 
+#How many can be explained by eQTLs?
+dplyr::group_by(salmonella_df_r2, quant) %>% dplyr::mutate(is_shared = ifelse(R2 > 0.8, TRUE, FALSE)) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), is_shared_count = sum(is_shared), frac = is_shared_count/qtl_count)
+
+#Explore factors that explain response trQTLs
+inter_genes = dplyr::filter(acLDL_df_r2, interaction_fraction > 0.5, p_fdr < 0.1)
+ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_histogram() + facet_wrap(~quant)
+ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_density()
+ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_histogram() + facet_wrap(~quant)
+ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_density(adjust = 2)
+
+dplyr::group_by(acLDL_df_r2, quant) %>% dplyr::mutate(is_shared = ifelse(R2 > 0.8, TRUE, FALSE)) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), is_shared_count = sum(is_shared), frac = is_shared_count/qtl_count)
 
 
 

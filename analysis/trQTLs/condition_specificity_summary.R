@@ -157,7 +157,11 @@ acLDL_df_r2 = dplyr::left_join(acldl_df, acLDL_r2_df, by = c("quant","condition"
   dplyr::mutate(R2 = ifelse(is.na(R2), 0, R2))
 saveRDS(acLDL_df_r2, "results/trQTLs/variance_explained/acLDL_compiled_varExp.rds")
 
-#Estimate the fraction of QTLs that are condition specific
+#Reimport trQTL data frames
+salmonella_df = readRDS("results/trQTLs/variance_explained/salmonella_compiled_varExp.rds")
+acldl_df = readRDS("results/trQTLs/variance_explained/acLDL_compiled_varExp.rds")
+
+###### Estimate the fraction of QTLs that are condition specific #####
 salmonella_fraction = dplyr::group_by(salmonella_df, quant, condition) %>% 
   dplyr::mutate(interaction_fraction = ifelse(is.na(interaction_fraction), 0, interaction_fraction)) %>% 
   dplyr::mutate(is_response_QTL = ifelse(interaction_fraction > .5 & p_fdr < 0.1, TRUE, FALSE)) %>%
@@ -180,32 +184,46 @@ response_fraction_plot = ggplot(fraction_df, aes(x = phenotype, y = interaction_
   facet_wrap(~figure_name, nrow = 1) +
   geom_bar(stat = "identity") +
   theme_light() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) +
-  ylab("Response QTL fraction") +
-  xlab("Quantification method")
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
+  ylab("Response QTL fraction")
 ggsave("results/figures/response_fraction_plot.pdf", plot = response_fraction_plot, width = 5, height = 3)
 
 
 #Explore factors that explain response trQTLs
-inter_genes = dplyr::filter(salmonella_df_r2, interaction_fraction > 0.5, p_fdr < 0.1, condition == "SL1344")
-ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_histogram() + facet_wrap(~quant)
-ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_density()
-ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_histogram() + facet_wrap(~quant)
-ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_density(adjust = 2)
+inter_df = dplyr::bind_rows(salmonella_df, acldl_df)
+inter_genes = dplyr::filter(inter_df, interaction_fraction > 0.5, p_fdr < 0.1) %>%
+  dplyr::filter(!is.na(naive_tpm)) %>%
+  dplyr::mutate(not_expressed = ifelse(naive_tpm > 2, FALSE, TRUE)) %>%
+  dplyr::mutate(shared_eQTL = ifelse(R2 > 0.8, TRUE, FALSE)) %>%
+  dplyr::mutate(is_extreme_DE = ifelse(log2FoldChange < 5 | is.na(log2FoldChange), FALSE, TRUE)) %>%
+  dplyr::mutate(expression_only = not_expressed | is_extreme_DE) %>%
+  dplyr::mutate(all_technical = shared_eQTL | not_expressed | is_extreme_DE) %>%
+  dplyr::mutate()
+saveRDS(inter_genes, "results/trQTLs/variance_explained/signifcant_interactions.rds")
 
-#How many can be explained by eQTLs?
-dplyr::group_by(salmonella_df_r2, quant) %>% dplyr::mutate(is_shared = ifelse(R2 > 0.8, TRUE, FALSE)) %>% 
-  dplyr::summarise(qtl_count = length(phenotype_id), is_shared_count = sum(is_shared), frac = is_shared_count/qtl_count)
+#Estimate the fraction of QTLs that can be explained by technical factors
+technical_report = dplyr::group_by(inter_genes, quant, condition) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), 
+                   has_shared_eQTL = sum(shared_eQTL),
+                   expression_diff = sum(expression_only),
+                   is_technical = sum(all_technical)) %>%
+  dplyr::mutate(technical_fraction = is_technical/qtl_count) %>%
+  dplyr::mutate(not_expressed = expression_diff/qtl_count) %>%
+  dplyr::mutate(has_eQTL = (is_technical-expression_diff)/qtl_count)
 
-#Explore factors that explain response trQTLs
-inter_genes = dplyr::filter(acLDL_df_r2, interaction_fraction > 0.5, p_fdr < 0.1)
-ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_histogram() + facet_wrap(~quant)
-ggplot(inter_genes, aes(x = log(naive_tpm + 1,2), color = quant)) + geom_density()
-ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_histogram() + facet_wrap(~quant)
-ggplot(inter_genes, aes(x = log2FoldChange, color = quant)) + geom_density(adjust = 2)
+technical_df = dplyr::select(technical_report, quant, condition, not_expressed, has_eQTL) %>% 
+  tidyr::gather("type", "fraction_explained", not_expressed:has_eQTL) %>%
+  dplyr::rename(condition_name = condition) %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::left_join(phenotypeFriendlyNames())
 
-dplyr::group_by(acLDL_df_r2, quant) %>% dplyr::mutate(is_shared = ifelse(R2 > 0.8, TRUE, FALSE)) %>% 
-  dplyr::summarise(qtl_count = length(phenotype_id), is_shared_count = sum(is_shared), frac = is_shared_count/qtl_count)
+qtl_technical_factors = ggplot(technical_df, aes(x = phenotype, y = fraction_explained, fill = type)) + 
+  geom_bar(stat = "identity") + 
+  facet_wrap(~figure_name, nrow = 1) + 
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
+  ylab("Fraction of response QTLs")
+ggsave("results/figures/response_QTLs_explained_by_tech.pdf", plot = qtl_technical_factors, width = 6, height = 3)
 
 
 

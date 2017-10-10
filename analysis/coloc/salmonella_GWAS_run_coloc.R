@@ -17,20 +17,27 @@ option_list <- list(
               help="Name of the GWAS trait", metavar = "type"),
   make_option(c("-d", "--dir"), type="character", default=NULL,
               help="Path to GWAS summary stats directory.", metavar = "type"),
+  make_option(c("-q", "--qtl"), type="character", default=NULL,
+              help="Path to the QTL directory.", metavar = "type"),
   make_option(c("-o", "--outdir"), type="character", default=NULL,
-              help="Path to the output directory.", metavar = "type")
+              help="Path to the output directory.", metavar = "type"),
+  make_option(c("-s", "--samplesizes"), type="character", default=NULL,
+              help="Path to the tab-separated text file with condition names and sample sizes.", metavar = "type")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Debugging
-#opt = list(g = "IBD", w = "2e5", p = "ensembl_87", d = "databases/GWAS/summary", o = "results/acLDL/coloc/coloc_lists/")
+#opt = list(g = "IBD", w = "2e5", p = "featureCounts", d = "/Volumes/JetDrive/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/",
+#           q = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt")
 
 #Extract parameters for CMD options
 gwas_id = opt$g
 cis_window = as.numeric(opt$w)
 phenotype = opt$p
 gwas_dir = opt$d
+qtl_dir = opt$q
 outdir = opt$o
+sample_size_path = opt$s
 
 #Import variant information
 GRCh38_variants = importVariantInformation("results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz")
@@ -39,73 +46,13 @@ GRCh37_variants = importVariantInformation("results/genotypes/salmonella/GRCh37/
 #Import list of GWAS studies
 gwas_stats_labeled = readr::read_tsv("analysis/data/gwas/GWAS_summary_stat_list.labeled.txt", col_names = c("trait","file_name","type"))
 
-#Specify list of phenotypes
-phenotype_list = list(
-  #Ensembl 87 trQTLs
-  Ensembl_87 = list(
-    min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/Ensembl_87/naive.permuted.txt.gz"),
-                       IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/Ensembl_87/IFNg.permuted.txt.gz"),
-                       SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/Ensembl_87/SL1344.permuted.txt.gz"),
-                       IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/Ensembl_87/IFNg_SL1344.permuted.txt.gz")) %>%
-      purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),
-    qtl_summary_list = list(naive = "processed/salmonella/qtltools/output/Ensembl_87/sorted/naive.nominal.sorted.txt.gz",
-                            IFNg = "processed/salmonella/qtltools/output/Ensembl_87/sorted/IFNg.nominal.sorted.txt.gz",
-                            SL1344 = "processed/salmonella/qtltools/output/Ensembl_87/sorted/SL1344.nominal.sorted.txt.gz",
-                            IFNg_SL1344 = "processed/salmonella/qtltools/output/Ensembl_87/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
-  ),
-  reviseAnnotations = list(
-    min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations/naive.permuted.txt.gz"),
-                       IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations/IFNg.permuted.txt.gz"),
-                       SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations/SL1344.permuted.txt.gz"),
-                       IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/reviseAnnotations/IFNg_SL1344.permuted.txt.gz")) %>%
-      purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),
-    qtl_summary_list = list(naive = "processed/salmonella/qtltools/output/reviseAnnotations/sorted/naive.nominal.sorted.txt.gz",
-                            IFNg = "processed/salmonella/qtltools/output/reviseAnnotations/sorted/IFNg.nominal.sorted.txt.gz",
-                            SL1344 = "processed/salmonella/qtltools/output/reviseAnnotations/sorted/SL1344.nominal.sorted.txt.gz",
-                            IFNg_SL1344 = "processed/salmonella/qtltools/output/reviseAnnotations/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
-  ),
-  leafcutter = list(
-    min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/naive.permuted.txt.gz"),
-                       IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/IFNg.permuted.txt.gz"),
-                       SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/SL1344.permuted.txt.gz"),
-                       IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/leafcutter/IFNg_SL1344.permuted.txt.gz")) %>%
-      purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),
-    qtl_summary_list = list(naive = "processed/salmonella/qtltools/output/leafcutter/sorted/naive.nominal.sorted.txt.gz",
-                            IFNg = "processed/salmonella/qtltools/output/leafcutter/sorted/IFNg.nominal.sorted.txt.gz",
-                            SL1344 = "processed/salmonella/qtltools/output/leafcutter/sorted/SL1344.nominal.sorted.txt.gz",
-                            IFNg_SL1344 = "processed/salmonella/qtltools/output/leafcutter/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
-  ),
-  tpm = list(
-    min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/naive.permuted.txt.gz"),
-                       IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/IFNg.permuted.txt.gz"),
-                       SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/SL1344.permuted.txt.gz"),
-                       IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/tpm/IFNg_SL1344.permuted.txt.gz")) %>%
-      purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),
-    qtl_summary_list = list(naive = "processed/salmonella/qtltools/output/tpm/sorted/naive.nominal.sorted.txt.gz",
-                            IFNg = "processed/salmonella/qtltools/output/tpm/sorted/IFNg.nominal.sorted.txt.gz",
-                            SL1344 = "processed/salmonella/qtltools/output/tpm/sorted/SL1344.nominal.sorted.txt.gz",
-                            IFNg_SL1344 = "processed/salmonella/qtltools/output/tpm/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
-  ),
-  featureCounts = list(
-    min_pvalues = list(naive = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/naive.permuted.txt.gz"),
-                       IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/IFNg.permuted.txt.gz"),
-                       SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/SL1344.permuted.txt.gz"),
-                       IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/featureCounts/IFNg_SL1344.permuted.txt.gz")) %>%
-      purrr::map(~dplyr::select(., phenotype_id, snp_id, p_fdr)),
-    qtl_summary_list = list(naive = "processed/salmonella/qtltools/output/featureCounts/sorted/naive.nominal.sorted.txt.gz",
-                            IFNg = "processed/salmonella/qtltools/output/featureCounts/sorted/IFNg.nominal.sorted.txt.gz",
-                            SL1344 = "processed/salmonella/qtltools/output/featureCounts/sorted/SL1344.nominal.sorted.txt.gz",
-                            IFNg_SL1344 = "processed/salmonella/qtltools/output/featureCounts/sorted/IFNg_SL1344.nominal.sorted.txt.gz"),
-    sample_sizes = list(naive = 84, IFNg = 84, SL1344 = 84, IFNg_SL1344 = 84)
-  )
-)
+#Import sample sizes
+sample_sizes = readr::read_tsv(sample_size_path, col_names = c("condition_name", "sample_size"), col_types = "cc")
+sample_sizes_list = as.list(sample_sizes$sample_size)
+names(sample_sizes_list) = sample_sizes$condition_name
 
-#Extract the phenotype of interest
-phenotype_values = phenotype_list[[phenotype]]
+#Construct a new QTL list 
+phenotype_values = constructQtlListForColoc(phenotype, qtl_dir, sample_sizes_list)
 
 #Spcecify the location of the GWAS summary stats file
 gwas_file_name = dplyr::filter(gwas_stats_labeled, trait == gwas_id)$file_name

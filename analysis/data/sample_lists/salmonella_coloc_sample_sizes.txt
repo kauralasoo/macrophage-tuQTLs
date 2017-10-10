@@ -1,0 +1,4 @@
+naive	84
+IFNg	84
+SL1344	84
+IFNg_SL1344	84

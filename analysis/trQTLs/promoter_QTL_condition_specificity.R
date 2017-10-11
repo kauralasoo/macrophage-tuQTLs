@@ -1,18 +1,62 @@
-#Are upstream events more likely to condition-specific
-inter_df = dplyr::bind_rows(salmonella_df)
-inter_genes = dplyr::filter(inter_df, interaction_fraction > 0.5, p_fdr < 0.1) %>%
-  dplyr::filter(!is.na(naive_tpm)) %>%
-  dplyr::mutate(not_expressed = ifelse(naive_tpm > 2, FALSE, TRUE)) %>%
-  dplyr::mutate(shared_eQTL = ifelse(R2 > 0.8, TRUE, FALSE)) %>%
-  dplyr::mutate(is_extreme_DE = ifelse(log2FoldChange < 5 | is.na(log2FoldChange), FALSE, TRUE)) %>%
-  dplyr::mutate(expression_only = not_expressed | is_extreme_DE) %>%
-  dplyr::mutate(all_technical = shared_eQTL | not_expressed | is_extreme_DE) %>%
-  dplyr::mutate()
+library("dplyr")
+library("tidyr")
+library("purrr")
+library("ggplot2")
+library("devtools")
+library("SummarizedExperiment")
+load_all("../seqUtils/")
+load_all("analysis/housekeeping/")
 
-revised_qtls = dplyr::filter(salmonella_df, quant == "reviseAnnotations") %>%
-  tidyr::separate(phenotype_id, c("ensembl_gene_id","group_id", "position", "transcript_id"), sep = "\\.", remove = FALSE)
-revised_trqtls = dplyr::filter(inter_genes, quant == "reviseAnnotations") %>%
-  tidyr::separate(phenotype_id, c("ensembl_gene_id","group_id", "position", "transcript_id"), sep = "\\.", remove = FALSE)
+#Import true promoter events
+promoter_events = readRDS("results/reviseAnnotations/promoter_events.rds")
+true_promoters = dplyr::filter(promoter_events, contained == 0) %>%
+  dplyr::transmute(group_id, is_promoter = TRUE)
 
-table(revised_qtls$position)
-table(revised_trqtls$position)
+#Import gene metadata
+revised_gene_metadata = readRDS("results/SummarizedExperiments/salmonella_salmon_reviseAnnotations.rds") %>%
+  rowData(.) %>% tbl_df2()
+group_map = dplyr::select(revised_gene_metadata, transcript_id, group_id) %>%
+  dplyr::group_by(group_id) %>%
+  dplyr::mutate(transcript_count = length(transcript_id)) %>%
+  dplyr::ungroup()
+
+#Import QTLs
+salmonella_df = readRDS("results/trQTLs/variance_explained/salmonella_compiled_varExp.rds")
+acldl_df = readRDS("results/trQTLs/variance_explained/acldl_compiled_varExp.rds")
+qtls_df = dplyr::bind_rows(salmonella_df, acldl_df) %>%
+  dplyr::left_join(group_map, by = c("phenotype_id" = "transcript_id")) %>%
+  dplyr::left_join(true_promoters, by = "group_id") %>%
+  dplyr::mutate(is_promoter = ifelse(is.na(is_promoter), FALSE, is_promoter)) %>%
+  dplyr::mutate(is_response = ifelse(interaction_fraction > 0.5 & p_fdr < 0.1, TRUE, FALSE)) %>%
+  dplyr::filter(quant == "reviseAnnotations") %>%
+  dplyr::filter(transcript_count <= 10) %>%
+  tidyr::separate(phenotype_id, c("ensembl_gene_id","grp", "position", "transcript_id"), sep = "\\.", remove = FALSE)
+
+#Count promoter qtls
+promoter_counts = dplyr::filter(qtls_df, is_promoter) %>% 
+  group_by(condition, position) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
+  dplyr::mutate(response_fraction = response_count/qtl_count)
+
+other_counts = qtls_df %>% 
+  group_by(condition, position) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
+  dplyr::mutate(response_fraction = response_count/qtl_count) %>%
+  dplyr::filter(position != "upstream")
+
+#Event names
+event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("promoter", "middle", "end"), levels = c("promoter", "middle", "end")))
+
+count_df = dplyr::bind_rows(promoter_counts, other_counts) %>%
+  dplyr::rename(condition_name = condition) %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::left_join(event_names)
+
+promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction)) + 
+  geom_bar(stat = "identity") +
+  facet_wrap(~figure_name, nrow = 1) + 
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
+  ylab("Response QTL fraction")
+ggsave("results/figures/response_fraction_by_event_type.pdf", plot = promoter_plot, height = 3, width = 4)
+

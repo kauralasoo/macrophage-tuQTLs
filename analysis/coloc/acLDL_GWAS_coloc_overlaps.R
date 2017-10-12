@@ -64,7 +64,7 @@ revised_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix =
   #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
   dplyr::select(-.row)
 
-#revisedAnnotations
+#leafcutter
 leafcutter_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".leafcutter.2e5.txt", 
                                               coloc_prefix = "processed/acLDL/coloc/",
                                               PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
@@ -83,7 +83,7 @@ tpm_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".t
   dplyr::select(-.row)
 
 featureCounts_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".featureCounts.2e5.txt", 
-                                                    coloc_prefix = "processed/salmonella/coloc/",
+                                                    coloc_prefix = "processed/acLDL/coloc/",
                                                     PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
                                                     gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_tpm)$coloc_filtered %>%
   dplyr::left_join(tpm_name_map, by = "phenotype_id") %>%
@@ -93,12 +93,12 @@ featureCounts_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_su
 #Put all GWAS overlaps into a single list
 gwas_olaps = list(ensembl_87 = ensembl_200kb_hits, revisedAnnotation = revised_200kb_hits, 
                   leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, featureCounts = featureCounts_200kb_hits)
-saveRDS(gwas_olaps, "results/coloc/GWAS_coloc_hits.rds")
-gwas_olaps = readRDS("results/coloc/GWAS_coloc_hits.rds")
+saveRDS(gwas_olaps, "results/coloc/acLDL_GWAS_coloc_hits.rds")
+gwas_olaps = readRDS("results/coloc/acLDL_GWAS_coloc_hits.rds")
 
 #Save a text table as well
 gwas_olaps_tbl = purrr::map_df(gwas_olaps, identity ,.id = "annotation")
-write.table(gwas_olaps_tbl, "results/coloc/GWAS_coloc_hits.txt", sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(gwas_olaps_tbl, "results/coloc/acLDL_GWAS_coloc_hits.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 
 
 

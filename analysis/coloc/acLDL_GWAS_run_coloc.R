@@ -23,7 +23,7 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Debugging
-#opt = list(g = "IBD", w = "2e5", p = "ensembl_87", d = "databases/GWAS/summary", o = "results/acLDL/coloc/coloc_lists/")
+opt = list(g = "AD", w = "2e5", p = "featureCounts", d = "/Volumes/JetDrive/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/")
 
 #Extract parameters for CMD options
 gwas_id = opt$g
@@ -97,13 +97,16 @@ qtl_df_list = prefilterColocCandidates(phenotype_values$min_pvalues, gwas_prefix
                                        overlap_dist = 1e5, gwas_thresh = 1e-5)
 qtl_pairs = purrr::map_df(qtl_df_list, identity) %>% unique()
 
+#Print for debugging
+print(head(qtl_pairs))
+
 #Test for coloc
 coloc_res_list = purrr::map2(phenotype_values$qtl_summary_list, phenotype_values$sample_sizes, 
                              ~colocMolecularQTLsByRow(qtl_pairs, qtl_summary_path = .x, 
                                                       gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), 
-                                                      GRCh37_variants = GRCh37_variants,
-                                                      GRCh38_variants = GRCh38_variants, 
-                                                      N_qtl = .y, cis_dist = cis_window))
+                                                      gwas_variant_info = GRCh37_variants,
+                                                      qtl_variant_info = GRCh38_variants, 
+                                                      N_qtl = .y, cis_dist = cis_window, QTLTools = TRUE))
 
 #Export results
 coloc_hits = purrr::map_df(coloc_res_list, identity, .id = "condition_name") %>% dplyr::arrange(gwas_lead)
@@ -111,4 +114,6 @@ coloc_output = file.path(outdir, paste(gwas_id, phenotype, opt$w, "txt", sep = "
 write.table(coloc_hits, coloc_output, sep = "\t", quote = FALSE, row.names = FALSE)
 
 #Debugging example
-#colocMolecularQTLs(qtl_pairs[1,], qtl_summary_list$Ctrl, gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), GRCh37_variants, GRCh38_variants, N_qtl = 2e5)
+#a = colocMolecularQTLs(qtl_pairs[1,], phenotype_values$qtl_summary_list$Ctrl, 
+#                   gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), 
+#                   gwas_variant_info = GRCh37_variants, qtl_variant_info = GRCh38_variants, N_qtl = 70, cis_dist = 2e5, QTLTools = TRUE)

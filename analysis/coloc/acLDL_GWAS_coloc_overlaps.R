@@ -91,7 +91,7 @@ featureCounts_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_su
   dplyr::select(-.row)
 
 #Put all GWAS overlaps into a single list
-gwas_olaps = list(ensembl_87 = ensembl_200kb_hits, revisedAnnotation = revised_200kb_hits, 
+gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, reviseAnnotations = revised_200kb_hits, 
                   leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, featureCounts = featureCounts_200kb_hits)
 saveRDS(gwas_olaps, "results/coloc/acLDL_GWAS_coloc_hits.rds")
 gwas_olaps = readRDS("results/coloc/acLDL_GWAS_coloc_hits.rds")

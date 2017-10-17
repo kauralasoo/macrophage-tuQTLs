@@ -47,47 +47,43 @@ gwas_stats_labeled = readr::read_tsv("analysis/data/gwas/GWAS_summary_stat_list.
 
 #Import coloc output
 #Ensembl
-ensembl_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".ensembl_87.2e5.txt", 
+ensembl_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".ensembl_87.2e5.txt", 
                                               coloc_prefix = "processed/salmonella/coloc/",
                                               PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
-                                              gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_ensembl)$coloc_filtered %>%
+                                              gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_ensembl) %>%
   dplyr::left_join(ensembl_name_map, by = "phenotype_id") %>%
-  #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
   dplyr::select(-.row)
 
 #revisedAnnotations
-revised_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".reviseAnnotations.2e5.txt", 
+revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".reviseAnnotations.2e5.txt", 
                                               coloc_prefix = "processed/salmonella/coloc/",
                                               PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
-                                              gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised)$coloc_filtered %>%
+                                              gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
   dplyr::left_join(revised_name_map, by = "phenotype_id") %>%
-  #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
   dplyr::select(-.row)
 
 #revisedAnnotations
-leafcutter_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".leafcutter.2e5.txt", 
+leafcutter_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".leafcutter.2e5.txt", 
                                                  coloc_prefix = "processed/salmonella/coloc/",
                                                  PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
-                                                 gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_leafcutter)$coloc_filtered %>%
+                                                 gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_leafcutter) %>%
   dplyr::left_join(leafcutter_name_map, by = "phenotype_id") %>%
-  #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
   dplyr::select(-.row)
 
 #featureCounts
-tpm_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".tpm.2e5.txt", 
+tpm_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".tpm.2e5.txt", 
                                           coloc_prefix = "processed/salmonella/coloc/",
                                           PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
-                                          gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_tpm)$coloc_filtered %>%
+                                          gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_tpm) %>%
   dplyr::left_join(tpm_name_map, by = "phenotype_id") %>%
   #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
   dplyr::select(-.row)
 
-featureCounts_200kb_hits = importAndFilterColocHits(gwas_stats_labeled, coloc_suffix = ".featureCounts.2e5.txt", 
+featureCounts_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".featureCounts.2e5.txt", 
                                           coloc_prefix = "processed/salmonella/coloc/",
                                           PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
-                                          gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_tpm)$coloc_filtered %>%
-  dplyr::left_join(tpm_name_map, by = "phenotype_id") %>%
-  #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
+                                          gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_featureCounts) %>%
+  dplyr::left_join(featureCounts_name_map, by = "phenotype_id") %>%
   dplyr::select(-.row)
 
 #Put all GWAS overlaps into a single list

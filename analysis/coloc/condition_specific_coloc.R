@@ -25,11 +25,11 @@ filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::summarize(interaction_fraction = max(interaction_fraction), p_fdr = min(p_fdr)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(desc(interaction_fraction)) %>%
-  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.5, TRUE, FALSE))
+  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE))
 
 #What fraction of colocs show evidence for being a response QTL?
 cond_summary = dplyr::group_by(filtered_colocs, quant) %>% 
-  dplyr::summarize(coloc_count = length(gene_name), response_count = sum(is_response), response_fraction = response_count/coloc_count)
+  dplyr::summarize(coloc_count = length(gene_name), response_count = sum(is_response, na.rm = T), response_fraction = response_count/coloc_count)
 
 
 #### AcLDL ####
@@ -52,7 +52,7 @@ filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::summarize(interaction_fraction = max(interaction_fraction), p_fdr = min(p_fdr)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(desc(interaction_fraction)) %>%
-  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.5, TRUE, FALSE))
+  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE))
 
 #What fraction of colocs show evidence for being a response QTL?
 cond_summary = dplyr::group_by(filtered_colocs, quant) %>% 

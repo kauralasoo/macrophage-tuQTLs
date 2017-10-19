@@ -1,0 +1,10 @@
+library("devtools")
+library("dplyr")
+library("ggplot2")
+library("purrr")
+library("tidyr")
+library("GenomicFeatures")
+library("SummarizedExperiment")
+load_all("../seqUtils/")
+load_all("../wiggleplotr")
+

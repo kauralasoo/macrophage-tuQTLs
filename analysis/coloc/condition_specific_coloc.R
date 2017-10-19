@@ -25,12 +25,11 @@ filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::summarize(interaction_fraction = max(interaction_fraction), p_fdr = min(p_fdr)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(desc(interaction_fraction)) %>%
-  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE))
+  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE)) %>%
+  dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
-#What fraction of colocs show evidence for being a response QTL?
-cond_summary = dplyr::group_by(filtered_colocs, quant) %>% 
-  dplyr::summarize(coloc_count = length(gene_name), response_count = sum(is_response, na.rm = T), response_fraction = response_count/coloc_count)
-
+#Identify response colocs
+response_coloc_hits = dplyr::filter(filtered_colocs, is_response)
 
 #### AcLDL ####
 #Import coloc overlaps
@@ -47,13 +46,40 @@ response_colocs = dplyr::left_join(coloc_df, salmonella_effects, by = c("quant",
   dplyr::distinct()
 
 #Identify unique genes
-filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>% 
+acldl_filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>% 
   dplyr::group_by(trait, gwas_lead, quant, gene_name) %>% 
   dplyr::summarize(interaction_fraction = max(interaction_fraction), p_fdr = min(p_fdr)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(desc(interaction_fraction)) %>%
-  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE))
+  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE)) %>%
+  dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
-#What fraction of colocs show evidence for being a response QTL?
-cond_summary = dplyr::group_by(filtered_colocs, quant) %>% 
-  dplyr::summarize(coloc_count = length(gene_name), response_count = sum(is_response), response_fraction = response_count/coloc_count)
+acldl_response_coloc_hits = dplyr::filter(acldl_filtered_colocs, is_response)
+
+
+
+#Estimate the fraction of colocs that are condition specific
+cond_specific_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) %>%
+  dplyr::select(trait, quant, gene_name, is_response) %>% 
+  dplyr::distinct() %>% dplyr::group_by(quant, is_response) %>% 
+  dplyr::summarise(response_count = length(gene_name)) %>%
+  dplyr::ungroup() %>%
+  dplyr::left_join(phenotypeFriendlyNames())
+
+
+cond_fraction = cond_specific_colocs %>%
+  dplyr::mutate(is_response = ifelse(is_response, "response", "other")) %>%
+  tidyr::spread(is_response, response_count) %>%
+  dplyr::mutate(response_fraction = response/(other+response))
+
+
+#Make a plot highilight cons-specific colocs
+cond_speicifc_coloc_plot = ggplot(cond_specific_colocs, aes(x = phenotype, y = response_count, fill = is_response)) + 
+  geom_bar(stat = "identity") +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
+  ylab("Number of colocalisations")
+ggsave("results/figures/coloc_response_fraction.pdf",cond_speicifc_coloc_plot, width = 3, height = 4)
+
+
+

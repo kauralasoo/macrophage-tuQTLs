@@ -57,40 +57,47 @@ acldl_filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
 
 acldl_response_coloc_hits = dplyr::filter(acldl_filtered_colocs, is_response)
 
-
+#Extract summarized traits
+summarised_traits = dplyr::bind_rows(coloc_df, acldl_coloc_df) %>%
+  dplyr::select(trait, summarised_trait) %>% dplyr::distinct()
 
 #Estimate the fraction of colocs that are condition specific
 cond_specific_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) %>%
-  dplyr::select(trait, quant, gene_name, is_response) %>% 
-  dplyr::distinct() %>% dplyr::group_by(quant, is_response) %>% 
+  dplyr::left_join(summarised_traits) %>%
+  dplyr::group_by(quant, summarised_trait, gene_name) %>%
+  dplyr::mutate(has_response = as.logical(max(is_response))) %>%
+  dplyr::select(quant, gene_name, summarised_trait, has_response) %>%
+  dplyr::distinct() %>% dplyr::group_by(quant, has_response) %>% 
+  dplyr::filter(gene_name != "FADS2") %>% #Remove FADS2 because it has too many associations
   dplyr::summarise(response_count = length(gene_name)) %>%
   dplyr::ungroup() %>%
   dplyr::left_join(phenotypeFriendlyNames())
 
 
 cond_fraction = cond_specific_colocs %>%
-  dplyr::mutate(is_response = ifelse(is_response, "response", "other")) %>%
-  tidyr::spread(is_response, response_count) %>%
+  dplyr::mutate(has_response = ifelse(has_response, "response", "other")) %>%
+  tidyr::spread(has_response, response_count) %>%
   dplyr::mutate(response_fraction = response/(other+response))
 
 
 #Make a plot highilight cons-specific colocs
-cond_speicifc_coloc_plot = ggplot(cond_specific_colocs, aes(x = phenotype, y = response_count, fill = is_response)) + 
+cond_speicifc_coloc_plot = ggplot(cond_specific_colocs, aes(x = phenotype, y = response_count, fill = has_response)) + 
   geom_bar(stat = "identity") +
   theme_light() +
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
-  ylab("Number of colocalisations")
-ggsave("results/figures/coloc_response_fraction.pdf",cond_speicifc_coloc_plot, width = 3, height = 4)
+  theme(legend.position = "top") + 
+  ylab("Number of colocalisations") +
+  labs(fill = "response QTL")
+ggsave("results/figures/coloc_response_fraction.pdf",cond_speicifc_coloc_plot, width = 2.8, height = 3.8)
 
 
 
 
 #Quantify coloc sharing between different phenotypes
-summarised_traits = dplyr::bind_rows(coloc_df, acldl_coloc_df) %>%
-  dplyr::select(trait, summarised_trait) %>% dplyr::distinct()
 all_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) %>%
   dplyr::left_join(summarised_traits) %>%
-  dplyr::left_join(phenotypeFriendlyNames())
+  dplyr::left_join(phenotypeFriendlyNames()) %>%
+  dplyr::filter(gene_name != "FADS2")
 
 #Count overlaps by quantification strategy (by gene-trait pair)
 unique_trait_gene_pairs = dplyr::select(all_colocs, phenotype, summarised_trait, gene_name) %>% 
@@ -105,12 +112,12 @@ unique_trait_gene_pairs = dplyr::select(all_colocs, phenotype, summarised_trait,
 
 overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
   tidyr::spread(phenotype, id) %>%
-  dplyr::mutate_at(.cols = vars(3:6), 
+  dplyr::mutate_at(.vars = vars(3:6), 
                    .funs = function(x){ifelse(is.na(x), 0,1)}) %>%
   as.data.frame()
 
-pdf("results/figures/coloc_GWAS_overlap_UpSetR.pdf", width = 6, height = 4, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript ratio", "Leafcutter", "reviseAnnotations")), 
+pdf("results/figures/coloc_GWAS_overlap_UpSetR.pdf", width = 4.5, height = 3.5, onefile = FALSE)
+upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript ratio", "Leafcutter", "txrevise")), 
       order.by = "freq", keep.order = TRUE)
 dev.off()
 

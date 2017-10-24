@@ -110,7 +110,8 @@ revised_counts_02 = countIndependentQTLs(salmonella_qtls$reviseAnnotations[1:4],
 revised_counts_08 = countIndependentQTLs(salmonella_qtls$reviseAnnotations[1:4], revised_names,
                                       fdr_threshold = 0.1, R2_threshold = 0.8) %>%
   dplyr::mutate(R2 = 0.8)
-revised_counts = dplyr::bind_rows(revised_counts_02,revised_counts_08)
+revised_counts = dplyr::bind_rows(revised_counts_02,revised_counts_08) %>% 
+  dplyr::mutate(quant = "reviseAnnotations")
 write.table(revised_counts, "results/figures/tables/revised_independent_qtls.txt", 
             sep = "\t", quote = FALSE, row.names = FALSE)
 
@@ -121,39 +122,26 @@ leafcutter_counts_02 = countIndependentQTLs(salmonella_qtls$leafcutter[1:4], lea
 leafcutter_counts_08 = countIndependentQTLs(salmonella_qtls$leafcutter[1:4], leafcutter_names,
                                          fdr_threshold = 0.1, R2_threshold = 0.8) %>%
   dplyr::mutate(R2 = 0.8)
-leafcutter_counts = dplyr::bind_rows(leafcutter_counts_02,leafcutter_counts_08)
+leafcutter_counts = dplyr::bind_rows(leafcutter_counts_02,leafcutter_counts_08) %>%
+  dplyr::mutate(quant = "leafcutter")
 write.table(leafcutter_counts, "results/figures/tables/leafcutter_independent_qtls.txt", 
             sep = "\t", quote = FALSE, row.names = FALSE)
 
+#Make a plot of multiple QTLs per gene
+multiple_qtls = dplyr::bind_rows(revised_counts, leafcutter_counts) %>% 
+  dplyr::left_join(phenotypeFriendlyNames()) %>%
+  dplyr::mutate(R2 = as.factor(R2))
+
+multiple_qtl_fraction = ggplot(multiple_qtls, aes(x = R2, y = percent_all, color = phenotype)) + 
+  geom_boxplot() + 
+  theme_light() + 
+  coord_cartesian(ylim=c(0, 0.15)) +
+  ylab("Fraction of genes with multiple trQTLs") +
+  xlab("R2 threshold")
+ggsave("results/figures/multiple_trQTL_fraction.pdf", plot = multiple_qtl_fraction, width = 3, height = 3)
+
 
 ##### Count QTLs that have multiple target genes ####
-
-#Ensembl
-#### leafCutter ####
-#Identify genes with multiple independent QTLs
-qtls = purrr::map_df(salmonella_qtls$Ensembl_87[1:4], identity, .id = "condition_name") %>% 
-  dplyr::filter(p_fdr < 0.025) %>% 
-  dplyr::left_join(ensembl_names, by = "phenotype_id") %>%
-  dplyr::select(group_id, phenotype_id, gene_name, gene_id, p_nominal, snp_id) %>%
-  dplyr::arrange(gene_id, p_nominal) %>%
-  dplyr::group_by(gene_id) %>%
-  dplyr::mutate(qtl_count = length(gene_id)) %>%
-  dplyr::ungroup() %>%
-  dplyr::filter(!is.na(gene_name))
-
-#Find indenpednent qtls
-independent_qtls = dplyr::select(qtls, gene_id, snp_id, gene_name, phenotype_id) %>% 
-  filterHitsR2(vcf_file$genotypes, R2_thresh = .2) %>% 
-  dplyr::group_by(gene_id) %>%
-  dplyr::mutate(qtl_count = length(gene_id)) %>%
-  dplyr::ungroup() %>%
-  dplyr::filter(qtl_count > 1) %>%
-  dplyr::arrange(-qtl_count)
-
-a = length(unique(qtls$gene_id))
-b = length(unique(independent_qtls$gene_id))
-b/a
-
 
 #Count multi-gene QTLs per quantification method
 fc_multi_list = purrr::map(salmonella_qtls$featureCounts[1:4], 

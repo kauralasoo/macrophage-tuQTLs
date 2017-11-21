@@ -50,9 +50,10 @@ promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, grou
   geom_point() + 
   geom_line() + 
   theme_light() +
-  theme(axis.title.x = element_blank(), legend.title = element_blank()) +
+  theme(axis.title.x = element_blank()) +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
-  ylab("Response QTL fraction")
+  ylab("Response QTL fraction") +
+  scale_color_discrete("condition")
 ggsave("results/figures/response_fraction_by_event_type.pdf", plot = promoter_plot, height = 2.5, width = 3)
 
 
@@ -74,9 +75,10 @@ promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, grou
   geom_point() + 
   geom_line() + 
   theme_light() +
-  theme(axis.title.x = element_blank(), legend.title = element_blank()) +
+  theme(axis.title.x = element_blank()) +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
-  ylab("Response QTL fraction")
+  ylab("Response QTL fraction") +
+  scale_color_discrete("condition")
 ggsave("results/figures/response_fraction_by_promoter.pdf", plot = promoter_plot, height = 2.5, width = 3)
 
 

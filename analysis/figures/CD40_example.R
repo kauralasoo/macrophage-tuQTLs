@@ -36,7 +36,7 @@ vcf_file = readRDS("results/genotypes/salmonella/imputed.86_samples.sorted.filte
 GRCh38_information = importVariantInformation("results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz")
 GRCh37_information = importVariantInformation("results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz")
 
-#Extract FADS2
+#Extract CD40
 selected_phenotype_id = "ENSG00000101017.grp_1.upstream.ENST00000372285"
 selected_snp_id = "rs4239702"
 
@@ -48,9 +48,9 @@ plot_data = constructQtlPlotDataFrame(selected_phenotype_id, selected_snp_id,
   dplyr::mutate(condition_name = figure_name) %>%
   dplyr::filter(condition_name %in% c("N","I"))
 
-boxplot = plotQtlRow(plot_data) +
+boxplot = plotQtlCol(plot_data) +
   ylab("txrevise: 372285")
-ggsave("results/figures/CD40_promoter_relative_expression.pdf", boxplot, width = 4, height = 1.75)
+ggsave("results/figures/CD40_promoter_relative_expression.pdf", boxplot, width = 1.75, height = 2.5)
 
 
 #Make a QTL boxplot (absolute expression)
@@ -93,6 +93,8 @@ ggsave("results/figures/CD40_eQTL_boxplot.pdf", boxplot, width = 2.5, height = 3
 
 
 #Make a manhattan plot
+gwas_stats_labeled = readr::read_tsv("analysis/data/gwas/GWAS_summary_stat_list.labeled.txt", col_names = c("trait","file_name", "type"))
+
 ##### Promoter QTL ####
 qtl_df = data_frame(phenotype_id = selected_phenotype_id, snp_id = selected_snp_id, trait = "RA")
 qtl_paths = list(naive = "/Volumes/Ajamasin/processed/salmonella/qtltools/output/reviseAnnotations/sorted/naive.nominal.sorted.txt.gz",
@@ -111,19 +113,18 @@ gwas_manhattan = wiggleplotr::makeManhattanPlot(dplyr::filter(qtl_summary, track
 eqtl_data = dplyr::filter(qtl_summary, track_id != "RA") %>% 
   dplyr::left_join(conditionFriendlyNames()) %>% 
   dplyr::mutate(track_id = figure_name)
-eqtl_manhattan = wiggleplotr::makeManhattanPlot(dplyr::filter(eqtl_data, track_id != "RA"), region_coords, color_R2 = TRUE, data_track = FALSE) +
-  theme(plot.margin=unit(c(0.1,1,0.1,1),"line"),
-        legend.position="none",
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        strip.text.y = element_text(colour = "grey10"),
-        strip.background = element_rect(fill = "grey85")) +
-  xlab("Chromosome 20 position")
+eqtl_manhattan = wiggleplotr::makeManhattanPlot(dplyr::filter(eqtl_data, track_id != "RA"), region_coords, color_R2 = TRUE)
+
+#Make a gene location plot
+cd40_exons = ensembl_exons[1]
+names(cd40_exons) = c("CD40")
+transcripts_plot = plotTranscripts(exons = cd40_exons, rescale_introns = FALSE, region_coords = region_coords)
+
+joint_plot = cowplot::plot_grid(gwas_manhattan, eqtl_manhattan, transcripts_plot,
+                                align = "v", ncol = 1, rel_heights = c(3,6,3))
 
 
-joint_plot = cowplot::plot_grid(gwas_manhattan, eqtl_manhattan, 
-                                align = "v", ncol = 1, rel_heights = c(1,2))
-ggsave("results/figures/CD40_manhattan.pdf", plot = joint_plot, width = 4, height = 6)
+ggsave("results/figures/CD40_manhattan.pdf", plot = joint_plot, width = 4, height = 5)
 
 
 
@@ -169,14 +170,19 @@ filtered_tracks = dplyr::filter(track_data) %>% dplyr::filter(condition_name %in
   dplyr::mutate(track_id = figure_name)
 
 #Make coverage plot
-coverage_plot = plotCoverage(exons = c(ensembl_exons, tx_ranges), 
-                             cdss = ensembl_cdss,
+transcripts_plot = plotTranscripts(exons = c(ensembl_exons, tx_ranges), cdss = ensembl_cdss)
+ggsave("results/figures/CD40_transcripts.pdf", transcripts_plot, width = 3.5, height = 2.5)
+
+#Make a zoomed-in coverage plot of the first two exons
+first_exons = list(tx_ranges[[1]][1:2], tx_ranges[[2]][1:2])
+names(first_exons) = names(tx_ranges)
+
+coverage_plot = plotCoverage(exons = first_exons, 
                              track_data = filtered_tracks, rescale_introns = TRUE,
                              fill_palette = getGenotypePalette(), 
-                             plot_fraction = 0.2, heights = c(0.6,0.4), 
-                             return_subplots_list = FALSE, coverage_type = "line", transcript_label = TRUE)
-ggsave("results/figures/CD40_coverage_plot.pdf", coverage_plot, width = 4, height = 6)
-
+                             plot_fraction = 0.2, heights = c(0.7,0.3), 
+                             return_subplots_list = F, coverage_type = "line", transcript_label = FALSE)
+ggsave("results/figures/CD40_coverage_zoomed.pdf", coverage_plot, width = 3, height = 3)
 
 
 

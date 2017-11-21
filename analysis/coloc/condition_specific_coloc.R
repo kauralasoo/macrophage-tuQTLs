@@ -26,7 +26,7 @@ filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::summarize(interaction_fraction = max(interaction_fraction), p_fdr = min(p_fdr)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(desc(interaction_fraction)) %>%
-  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE)) %>%
+  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.5, TRUE, FALSE)) %>%
   dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
 #Identify response colocs
@@ -52,7 +52,7 @@ acldl_filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::summarize(interaction_fraction = max(interaction_fraction), p_fdr = min(p_fdr)) %>% 
   dplyr::ungroup() %>% 
   dplyr::arrange(desc(interaction_fraction)) %>%
-  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.2, TRUE, FALSE)) %>%
+  dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.5, TRUE, FALSE)) %>%
   dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
 acldl_response_coloc_hits = dplyr::filter(acldl_filtered_colocs, is_response)
@@ -73,22 +73,19 @@ cond_specific_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) 
   dplyr::ungroup() %>%
   dplyr::left_join(phenotypeFriendlyNames())
 
-
+#Estimate the fraction of condition-specific colocalisations
 cond_fraction = cond_specific_colocs %>%
   dplyr::mutate(has_response = ifelse(has_response, "response", "other")) %>%
   tidyr::spread(has_response, response_count) %>%
   dplyr::mutate(response_fraction = response/(other+response))
 
-
-#Make a plot highilight cons-specific colocs
-cond_speicifc_coloc_plot = ggplot(cond_specific_colocs, aes(x = phenotype, y = response_count, fill = has_response)) + 
-  geom_bar(stat = "identity") +
+coloc_response_plot = ggplot(cond_fraction, aes(x = phenotype, y = response_fraction)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() +
   theme_light() +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
-  theme(legend.position = "top") + 
-  ylab("Number of colocalisations") +
-  labs(fill = "response QTL")
-ggsave("results/figures/coloc_response_fraction.pdf",cond_speicifc_coloc_plot, width = 2.8, height = 3.8)
+  xlab("") +
+  ylab("Fraction of colocalisations \n that are response QTLs")
+ggsave("results/figures/coloc_response_fraction.pdf",coloc_response_plot, width = 3, height = 3)
 
 
 

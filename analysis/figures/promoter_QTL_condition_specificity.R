@@ -33,30 +33,54 @@ qtls_df = dplyr::bind_rows(salmonella_df, acldl_df) %>%
   tidyr::separate(phenotype_id, c("ensembl_gene_id","grp", "position", "transcript_id"), sep = "\\.", remove = FALSE)
 
 #Count promoter qtls
-promoter_counts = dplyr::filter(qtls_df, is_promoter) %>% 
+other_counts = qtls_df %>% 
   group_by(condition, position) %>% 
   dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
   dplyr::mutate(response_fraction = response_count/qtl_count)
 
-other_counts = qtls_df %>% 
-  group_by(condition, position) %>% 
-  dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
-  dplyr::mutate(response_fraction = response_count/qtl_count) %>%
-  dplyr::filter(position != "upstream")
-
 #Event names
-event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("promoter", "middle", "end"), levels = c("promoter", "middle", "end")))
+event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("start", "middle", "end"), levels = c("start", "middle", "end")))
 
-count_df = dplyr::bind_rows(promoter_counts, other_counts) %>%
+count_df = other_counts %>%
   dplyr::rename(condition_name = condition) %>%
   dplyr::left_join(conditionFriendlyNames()) %>%
   dplyr::left_join(event_names)
 
-promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction)) + 
-  geom_bar(stat = "identity") +
-  facet_wrap(~figure_name, nrow = 1) + 
+promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, group = figure_name, color = figure_name)) + 
+  geom_point() + 
+  geom_line() + 
   theme_light() +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
+  theme(axis.title.x = element_blank(), legend.title = element_blank()) +
+  theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
   ylab("Response QTL fraction")
-ggsave("results/figures/response_fraction_by_event_type.pdf", plot = promoter_plot, height = 3, width = 4)
+ggsave("results/figures/response_fraction_by_event_type.pdf", plot = promoter_plot, height = 2.5, width = 3)
 
+
+#### Look at true promoter events ####
+promoter_counts = dplyr::filter(qtls_df, is_promoter) %>% 
+  group_by(condition, position) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
+  dplyr::mutate(response_fraction = response_count/qtl_count)
+combined_counts = dplyr::bind_rows(dplyr::filter(other_counts, position != "upstream"), promoter_counts)
+
+event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("promoter", "middle", "end"), levels = c("promoter", "middle", "end")))
+
+count_df = combined_counts %>%
+  dplyr::rename(condition_name = condition) %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::left_join(event_names)
+
+promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, group = figure_name, color = figure_name)) + 
+  geom_point() + 
+  geom_line() + 
+  theme_light() +
+  theme(axis.title.x = element_blank(), legend.title = element_blank()) +
+  theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
+  ylab("Response QTL fraction")
+ggsave("results/figures/response_fraction_by_promoter.pdf", plot = promoter_plot, height = 2.5, width = 3)
+
+
+promoter_counts = dplyr::filter(qtls_df, position == "upstream") %>% 
+  group_by(condition, is_promoter) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
+  dplyr::mutate(response_fraction = response_count/qtl_count)

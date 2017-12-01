@@ -45,8 +45,8 @@ conditionFriendlyNames<- function(){
 
 phenotypeFriendlyNames<- function(){
     data_frame(quant = c("featureCounts", "Ensembl_87", "leafcutter", "reviseAnnotations"), 
-               phenotype = factor(c("read count", "transcript ratio", "Leafcutter", "txrevise"),
-               levels = c("read count", "transcript ratio", "Leafcutter", "txrevise")))
+               phenotype = factor(c("read count", "transcript usage", "Leafcutter", "txrevise"),
+               levels = c("read count", "transcript usage", "Leafcutter", "txrevise")))
 }
 
 

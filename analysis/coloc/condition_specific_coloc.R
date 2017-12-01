@@ -68,7 +68,7 @@ cond_specific_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) 
   dplyr::mutate(has_response = as.logical(max(is_response))) %>%
   dplyr::select(quant, gene_name, summarised_trait, has_response) %>%
   dplyr::distinct() %>% dplyr::group_by(quant, has_response) %>% 
-  dplyr::filter(gene_name != "FADS2") %>% #Remove FADS2 because it has too many associations
+  dplyr::filter(!(gene_name %in% c("FADS2","FADS2;FEN1;FADS1"))) %>% #Remove FADS2 because it has too many associations
   dplyr::summarise(response_count = length(gene_name)) %>%
   dplyr::ungroup() %>%
   dplyr::left_join(phenotypeFriendlyNames())
@@ -93,8 +93,7 @@ ggsave("results/figures/coloc_response_fraction.pdf",coloc_response_plot, width 
 #Quantify coloc sharing between different phenotypes
 all_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) %>%
   dplyr::left_join(summarised_traits) %>%
-  dplyr::left_join(phenotypeFriendlyNames()) %>%
-  dplyr::filter(gene_name != "FADS2")
+  dplyr::left_join(phenotypeFriendlyNames())
 
 #Count overlaps by quantification strategy (by gene-trait pair)
 unique_trait_gene_pairs = dplyr::select(all_colocs, phenotype, summarised_trait, gene_name) %>% 
@@ -105,7 +104,8 @@ unique_trait_gene_pairs = dplyr::select(all_colocs, phenotype, summarised_trait,
   dplyr::mutate(gene_name = ifelse(gene_name == "FADS2;FEN1;FADS1", "FADS2", gene_name)) %>%
   dplyr::mutate(gene_name = ifelse(gene_name == "ST7L;WNT2B", "ST7L", gene_name)) %>%
   dplyr::mutate(gene_name = ifelse(gene_name == "FDPS;RUSC1-AS1", "FDPS", gene_name)) %>%
-  dplyr::filter(!is.na(phenotype))
+  dplyr::filter(!is.na(phenotype)) %>%
+  dplyr::filter(gene_name != "FADS2")
 
 overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
   tidyr::spread(phenotype, id) %>%
@@ -114,7 +114,7 @@ overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
   as.data.frame()
 
 pdf("results/figures/coloc_GWAS_overlap_UpSetR.pdf", width = 4.5, height = 3.5, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript ratio", "Leafcutter", "txrevise")), 
+upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript usage", "Leafcutter", "txrevise")), 
       order.by = "freq", keep.order = TRUE)
 dev.off()
 

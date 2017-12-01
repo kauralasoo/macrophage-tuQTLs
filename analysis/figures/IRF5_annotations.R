@@ -13,7 +13,7 @@ plotting_annotations = dplyr::select(IRF5_data$metadata, ensembl_transcript_id, 
 irf5_tx = wiggleplotr::plotTranscripts(IRF5_data$exons, IRF5_data$cdss, rescale_introns = TRUE, transcript_label = FALSE)
 ggsave("results/figures/IRF5_annotated_transcripts.pdf", plot = irf5_tx, width = 3, height = 4)
 
-irf5_tx = wiggleplotr::plotTranscripts(IRF5_data$exons, IRF5_data$cdss, rescale_introns = TRUE)
+irf5_tx = wiggleplotr::plotTranscripts(IRF5_data$exons, IRF5_data$cdss, plotting_annotations, rescale_introns = TRUE)
 ggsave("results/figures/IRF5_annotated_transcripts_labeled.pdf", plot = irf5_tx, width = 5, height = 6)
 
 #Extend truncated transcripts

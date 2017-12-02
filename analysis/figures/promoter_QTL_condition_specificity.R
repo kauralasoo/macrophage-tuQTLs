@@ -53,7 +53,7 @@ promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, grou
   theme(axis.title.x = element_blank()) +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
   ylab("Response QTL fraction") +
-  scale_color_discrete("condition")
+  scale_color_manual(name = "condition", values = conditionPalette())
 ggsave("results/figures/response_fraction_by_event_type.pdf", plot = promoter_plot, height = 2.5, width = 3)
 
 
@@ -78,7 +78,7 @@ promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, grou
   theme(axis.title.x = element_blank()) +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
   ylab("Response QTL fraction") +
-  scale_color_discrete("condition")
+  scale_color_manual(name = "condition", values = conditionPalette())
 ggsave("results/figures/response_fraction_by_promoter.pdf", plot = promoter_plot, height = 2.5, width = 3)
 
 

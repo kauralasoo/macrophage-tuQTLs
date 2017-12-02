@@ -32,7 +32,7 @@ fraction_df = dplyr::bind_rows(salmonella_fraction, acldl_fraction) %>%
 #Make a line plot
 response_fraction_plot = ggplot(fraction_df, aes(x = phenotype, y = interaction_percent, color = figure_name, group = figure_name)) + 
   geom_point() + geom_line() +
-  scale_color_discrete("condition") +
+  scale_color_manual(name = "condition", values = conditionPalette()) +
   theme_light() +
   ylab("Response QTL fraction") +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1), axis.title.x = element_blank())

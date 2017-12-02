@@ -24,12 +24,18 @@ qtl_counts = dplyr::bind_rows(salmonella_qtl_count, acldl_qtl_count) %>%
   dplyr::left_join(conditionFriendlyNames(), by = "condition_name") %>% 
   dplyr::filter(!is.na(figure_name)) %>%
   dplyr::left_join(phenotypeFriendlyNames(), by = "quant") %>%
-  dplyr::filter(!is.na(phenotype))
+  dplyr::filter(!is.na(phenotype)) %>%
+  dplyr::mutate(is_control = ifelse(figure_name %in% c("N","Ctrl"), TRUE, FALSE))
 
 #Make plots of the QTL counts
-qtl_count_plot = ggplot(qtl_counts, aes(x = figure_name, y = qtl_count, fill = phenotype)) + 
-  geom_bar(stat = "identity", position = "dodge") + 
+qtl_count_plot = ggplot(qtl_counts, aes(x = phenotype, y = qtl_count, group = figure_name, color = figure_name, linetype = figure_name)) + 
+  geom_point(position = position_dodge(0.05)) + 
+  geom_line(position = position_dodge(0.05)) + 
   theme_light() + 
-  xlab("Condition") + 
-  ylab("Number of QTLs (FDR 10%)")
-ggsave("results/figures/qtl_count_plot.pdf", plot = qtl_count_plot, width = 5.5, height = 3)
+  coord_cartesian(ylim = c(0,3500)) +
+  scale_color_manual(name = "condition", values = c("#636363","#67a9cf","#2166ac","#ef8a62","#bdbdbd","#b2182b")) +
+  scale_linetype_manual(name = "condition", values = c("dotted", "solid", "solid", "solid","dotted", "solid")) +
+  theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
+  ylab("Number of significant QTLs (FDR < 0.1)")
+
+ggsave("results/figures/qtl_count_plot.pdf", plot = qtl_count_plot, width = 3.5, height = 4)

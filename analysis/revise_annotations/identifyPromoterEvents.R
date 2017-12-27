@@ -1,9 +1,14 @@
 library("devtools")
-load_all("../reviseAnnotations/")
+library("dplyr")
+library("data.table")
+library("SummarizedExperiment")
+load_all("../txrevise/")
+load_all("../seqUtils/")
+library("wiggleplotr")
 
 #Helper functions
 calculatePairDiff <- function(tx1_id, tx2_id, exons_list){
-  diff = reviseAnnotations::indentifyAddedRemovedRegions(tx1_id, tx2_id, exons_list)
+  diff = txrevise::indentifyAddedRemovedRegions(tx1_id, tx2_id, exons_list)
   diff_df = elementMetadata(c(diff[[1]], diff[[2]])) %>% as.data.frame() %>% 
     colSums() %>% as.data.frame() %>% t() %>% dplyr::tbl_df() %>%
     dplyr::mutate(tx1 = tx1_id, tx2 = tx2_id) %>%
@@ -83,4 +88,61 @@ group_summary = dplyr::group_by(all_diffs, group_id) %>%
   dplyr::summarize(upstream = sum(upstream), downstream = sum(downstream), contained = sum(contained))
 saveRDS(group_summary, "results/reviseAnnotations/UTR_events.rds")
 
+
+
+##### Tests cases for new promoter code ####
+#Identify all promoter events
+promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "IRF5") %>% 
+  dplyr::filter(group_id %like% "upstream") %>% 
+  dplyr::filter(group_id %like% "grp_1")
+
+transcripts = revised_granges[promoter_events$transcript_id]
+plotTranscripts(transcripts)
+
+new_transcripts = fillMissingInternalExons(transcripts)
+plotTranscripts(new_transcripts)
+
+
+promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "KIAA1671") %>% 
+  dplyr::filter(group_id %like% "upstream") %>% 
+  dplyr::filter(group_id %like% "grp_1")
+
+transcripts = revised_granges[promoter_events$transcript_id]
+plotTranscripts(transcripts)
+
+new_transcripts = fillMissingInternalExons(transcripts)
+plotTranscripts(new_transcripts)
+
+
+promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "IRF2") %>% 
+  dplyr::filter(group_id %like% "upstream") %>% 
+  dplyr::filter(group_id %like% "grp_1")
+
+transcripts = revised_granges[promoter_events$transcript_id]
+plotTranscripts(transcripts)
+
+new_transcripts = fillMissingInternalExons(transcripts)
+plotTranscripts(new_transcripts)
+
+
+promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "CD40") %>% 
+  dplyr::filter(group_id %like% "upstream") %>% 
+  dplyr::filter(group_id %like% "grp_1")
+
+transcripts = revised_granges[promoter_events$transcript_id]
+plotTranscripts(transcripts)
+
+new_transcripts = fillMissingInternalExons(transcripts)
+plotTranscripts(new_transcripts)
+
+
+promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "SLC9B2") %>% 
+  dplyr::filter(group_id %like% "upstream") %>% 
+  dplyr::filter(group_id %like% "grp_1")
+
+transcripts = revised_granges[promoter_events$transcript_id]
+plotTranscripts(transcripts)
+
+new_transcripts = fillMissingInternalExons(transcripts)
+plotTranscripts(new_transcripts)
 

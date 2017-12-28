@@ -2,6 +2,9 @@
 snakemake --cluster scripts/snakemake_submit.py -np -s reviseAnnotations.snakefile processed/annotations/reviseAnnotations/events/reviseAnnotations.transcript_metadata.txt --jobs 100 --configfile configs/reviseAnnotations_config.yaml
 snakemake --cluster scripts/snakemake_submit.py -np -s reviseAnnotations.snakefile processed/annotations/reviseAnnotations/events/reviseAnnotations.transcript_metadata.txt --jobs 100 --configfile configs/reviseAnnotations_config.GRCh38_87.yaml
 
+#Construct promoter events
+snakemake --cluster scripts/snakemake_submit.py -np -s txrevise_promoters.snakefile processed/annotations/txrevise_promoters/merged/txrevise_promoters.gff3 --jobs 100 --configfile configs/txrevise_promoters_config.yaml
+
 #Quantify gene and transcript expression
 snakemake --cluster scripts/snakemake_submit.py -np -s quantify_transcription.snakefile processed/salmonella/out.txt --jobs 100 --configfile configs/salmonella_trQTL_config.yaml
 snakemake --cluster scripts/snakemake_submit.py -np -s quantify_transcription.snakefile processed/acLDL/out.txt --jobs 100 --configfile configs/acLDL_trQTL_config.yaml

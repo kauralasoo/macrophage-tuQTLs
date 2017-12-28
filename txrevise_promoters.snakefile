@@ -5,7 +5,7 @@ rule run_txrevise:
 	output:
 		gff = "processed/annotations/txrevise_promoters/txrevise_promoters.batch_{batch}_{n_batches}.gff3",
 	params:
-		out_prefix = "processed/annotations/txrevise_prmoters/",
+		out_prefix = "processed/annotations/txrevise_promoters/",
 		chunk = "'{batch} {n_batches}'"
 	threads: 1
 	resources:

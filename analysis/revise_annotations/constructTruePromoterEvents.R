@@ -1,11 +1,11 @@
-library("devtools")
+library("purrr")
 library("dplyr")
-library("data.table")
-library("SummarizedExperiment")
+library("devtools")
+library("rtracklayer")
+library("GenomicFeatures")
+library("optparse")
 load_all("../txrevise/")
 load_all("../seqUtils/")
-library("optparse")
-library("wiggleplotr")
 
 #Read command-line options
 option_list <- list(
@@ -19,9 +19,9 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Test options
-opt = list(t = "results/annotations/reviseAnnotations.GRangesList.rds", 
-           b = "9999 10000",
-           o = "results/txrevise")
+#opt = list(t = "results/annotations/reviseAnnotations.GRangesList.rds", 
+#           b = "3 10000",
+#           o = "results/txrevise")
 
 #Import revised transcript annotations
 revised_granges = readRDS(opt$t)

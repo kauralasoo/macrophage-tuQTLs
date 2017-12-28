@@ -1,0 +1,3 @@
+txdb: "results/annotations/reviseAnnotations.GRangesList.rds"
+outdir: "processed/annotations/txrevise_promoters"
+n_batches: 300

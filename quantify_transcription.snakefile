@@ -209,12 +209,12 @@ rule count_ASE:
 #Make sure that all final output files get created
 rule make_all:
 	input:
-		expand("processed/{study}/verifyBamID/{sample}.verifyBamID.bestSM", study = config["study"], sample=config["samples"]),
-		expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
+		#expand("processed/{study}/verifyBamID/{sample}.verifyBamID.bestSM", study = config["study"], sample=config["samples"]),
+		#expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
 		expand("processed/{study}/salmon/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"]),
-		expand("processed/{study}/featureCounts/{sample}.featureCounts.txt", study = config["study"], sample=config["samples"]),
-		expand("processed/{study}/ASEcounts/{sample}.ASEcounts", study = config["study"], sample=config["samples"]),
-		"processed/{study}/leafcutter/leafcutter_perind.counts.gz"
+		#expand("processed/{study}/featureCounts/{sample}.featureCounts.txt", study = config["study"], sample=config["samples"]),
+		#expand("processed/{study}/ASEcounts/{sample}.ASEcounts", study = config["study"], sample=config["samples"]),
+		#"processed/{study}/leafcutter/leafcutter_perind.counts.gz"
 	output:
 		"processed/{study}/out.txt"
 	resources:

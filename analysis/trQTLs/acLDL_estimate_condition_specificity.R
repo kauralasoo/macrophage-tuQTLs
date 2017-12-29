@@ -78,6 +78,26 @@ revised_var_explained = purrr::pmap(list(revised_qtl_list, revised_mat_list, rev
 saveRDS(revised_var_explained, "results/trQTLs/variance_explained/acLDL_reviseAnnotations_varExp.rds")
 
 
+
+###### txrevise promoters #####
+se_reviseAnnotations = readRDS("results/SummarizedExperiments/acLDL_salmon_txrevise_promoters.rds")
+revised_by_cond = purrr::map(condition_list, ~extractConditionFromSummarizedExperiment(.,se_reviseAnnotations))
+
+#Extract feature matrices
+revised_mat_list = purrr::map(revised_by_cond, ~assays(.)$tpm_ratios %>%
+                                replaceNAsWithRowMeans() %>%
+                                quantileNormaliseRows())
+revised_sample_meta = purrr::map(revised_by_cond, ~colData(.) %>% tbl_df2())
+revised_gene_meta = rowData(se_reviseAnnotations) %>% tbl_df2()
+revised_qtl_list = purrr::map(qtls$txrevise_promoters[c("AcLDL")], ~dplyr::filter(.,p_fdr < 0.1))
+
+#Estimate variance explained for all QTLs detected in stimulated conditons
+revised_var_explained = purrr::pmap(list(revised_qtl_list, revised_mat_list, revised_sample_meta),
+                                    varExplainedWrapper,
+                                    vcf_file, qtl_formula, interaction_fomula)
+saveRDS(revised_var_explained, "results/trQTLs/variance_explained/acLDL_txrevise_promoters_varExp.rds")
+
+
 ###### Ensembl_87 #####
 se_ensembl = readRDS("results/SummarizedExperiments/acLDL_salmon_Ensembl_87.rds")
 ensembl_by_cond = purrr::map(condition_list, ~extractConditionFromSummarizedExperiment(.,se_ensembl))

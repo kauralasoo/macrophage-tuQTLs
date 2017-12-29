@@ -11,11 +11,13 @@ load_all("analysis/housekeeping/")
 salmonella_varexp_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_explained/salmonella_Ensembl_87_varExp.rds"),
                               reviseAnnotations = readRDS("results/trQTLs/variance_explained/salmonella_reviseAnnotations_varExp.rds"),
                               leafcutter = readRDS("results/trQTLs/variance_explained/salmonella_leafcutter_varExp.rds"),
-                              featureCounts = readRDS("results/trQTLs/variance_explained/salmonella_featureCounts_varExp.rds"))
+                              featureCounts = readRDS("results/trQTLs/variance_explained/salmonella_featureCounts_varExp.rds"),
+                              txrevise_promoters = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_promoters_varExp.rds"))
 acLDL_varexp_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_explained/acLDL_Ensembl_87_varExp.rds"),
                               reviseAnnotations = readRDS("results/trQTLs/variance_explained/acLDL_reviseAnnotations_varExp.rds"),
                               leafcutter = readRDS("results/trQTLs/variance_explained/acLDL_leafcutter_varExp.rds"),
-                              featureCounts = readRDS("results/trQTLs/variance_explained/acLDL_featureCounts_varExp.rds"))
+                              featureCounts = readRDS("results/trQTLs/variance_explained/acLDL_featureCounts_varExp.rds"),
+                              txrevise_promoters = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_promoters_varExp.rds"))
 
 #Caclulate fractions
 salmonella_fractions = purrr::map(salmonella_varexp_list, ~purrr::map(.,~dplyr::mutate(.,interaction_fraction = interaction/(genotype+interaction))))
@@ -26,11 +28,13 @@ acLDL_fractions = purrr::map(acLDL_varexp_list, ~purrr::map(.,~dplyr::mutate(.,i
 salmonella_test_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_explained/salmonella_Ensembl_87_interaction_test.rds"),
                             reviseAnnotations = readRDS("results/trQTLs/variance_explained/salmonella_reviseAnnotations_interaction_test.rds"),
                             leafcutter = readRDS("results/trQTLs/variance_explained/salmonella_leafcutter_interaction_test.rds"),
-                            featureCounts = readRDS("results/trQTLs/variance_explained/salmonella_featureCounts_interaction_test.rds"))
+                            featureCounts = readRDS("results/trQTLs/variance_explained/salmonella_featureCounts_interaction_test.rds"),
+                            txrevise_promoters = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_promoters_interaction_test.rds"))
 acLDL_test_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_explained/acLDL_Ensembl_87_interaction_test.rds"),
                          reviseAnnotations = readRDS("results/trQTLs/variance_explained/acLDL_reviseAnnotations_interaction_test.rds"),
                          leafcutter = readRDS("results/trQTLs/variance_explained/acLDL_leafcutter_interaction_test.rds"),
-                         featureCounts = readRDS("results/trQTLs/variance_explained/acLDL_featureCounts_interaction_test.rds"))
+                         featureCounts = readRDS("results/trQTLs/variance_explained/acLDL_featureCounts_interaction_test.rds"),
+                         txrevise_promoters = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_promoters_interaction_test.rds"))
 
 #Merge all test tesults together
 salmonella_test_df = purrr::map(salmonella_test_list, ~purrr::map_df(., identity, .id = "condition")) %>% 
@@ -104,6 +108,7 @@ salmonella_df = purrr::map(salmonella_fractions, ~purrr::map_df(., identity, .id
   dplyr::left_join(salmonella_test_df, by = c("quant","condition", "phenotype_id","snp_id")) %>%
   dplyr::left_join(log2FC_df, by = c("condition", "gene_id")) %>%
   dplyr::left_join(naive_tpm, by = "gene_id")
+saveRDS(salmonella_df, "results/trQTLs/variance_explained/salmonella_compiled_varExp.rds")
 
 acldl_df = purrr::map(acLDL_fractions, ~purrr::map_df(., identity, .id = "condition")) %>% 
   purrr::map_df(identity, .id = "quant") %>%
@@ -111,6 +116,7 @@ acldl_df = purrr::map(acLDL_fractions, ~purrr::map_df(., identity, .id = "condit
   dplyr::left_join(acLDL_test_df, by = c("quant","condition", "phenotype_id","snp_id")) %>%
   dplyr::left_join(log2FC_df, by = c("condition", "gene_id")) %>%
   dplyr::left_join(naive_tpm, by = "gene_id")
+saveRDS(acldl_df, "results/trQTLs/variance_explained/acLDL_compiled_varExp.rds")
 
 
 ##### Identify trQTLs that are linked to an eQTL of the same gene
@@ -123,7 +129,7 @@ salmonella_eQTLs = purrr::map_df(qtls$featureCounts, identity, .id = "condition"
   dplyr::transmute(gene_id = phenotype_id, eQTL_snp_id = snp_id, condition)
 
 #Find linked eQTLs
-trQTLs = dplyr::filter(salmonella_df, quant %in% c("reviseAnnotations", "Ensembl_87","leafcutter")) %>% 
+trQTLs = dplyr::filter(salmonella_df, quant %in% c("reviseAnnotations", "Ensembl_87","leafcutter", "txrevise_promoters")) %>% 
   dplyr::transmute(condition, quant, phenotype_id, gene_id, snp_id) %>% 
   dplyr::left_join(salmonella_eQTLs, by = c("gene_id", "condition")) %>% 
   dplyr::filter(!is.na(eQTL_snp_id)) 
@@ -139,7 +145,7 @@ qtls = readRDS("results/trQTLs/acLDL_trQTL_min_pvalues.rds")
 acLDL_eQTLs = purrr::map_df(qtls$featureCounts, identity, .id = "condition") %>% 
   dplyr::transmute(gene_id = phenotype_id, eQTL_snp_id = snp_id, condition)
 
-trQTLs = dplyr::filter(acldl_df, quant %in% c("reviseAnnotations", "Ensembl_87","leafcutter")) %>% 
+trQTLs = dplyr::filter(acldl_df, quant %in% c("reviseAnnotations", "Ensembl_87","leafcutter", "txrevise_promoters")) %>% 
   dplyr::transmute(condition, quant, phenotype_id, gene_id, snp_id) %>% 
   dplyr::left_join(acLDL_eQTLs, by = c("gene_id", "condition")) %>% 
   dplyr::filter(!is.na(eQTL_snp_id))

@@ -104,4 +104,26 @@ fc_interaction_res = purrr::pmap(list(fc_qtl_list, fc_mat_list, fc_sample_meta),
                                  vcf_file, formula_qtl, formula_interaction, id_field_separator = "-", lme4 = TRUE)
 saveRDS(fc_interaction_res, "results/trQTLs/variance_explained/salmonella_featureCounts_interaction_test.rds")
 
+###### txrevise promoters #####
+se_reviseAnnotations = readRDS("results/SummarizedExperiments/salmonella_salmon_txrevise_promoters.rds")
+revised_by_cond = purrr::map(condition_list, ~extractConditionFromSummarizedExperiment(.,se_reviseAnnotations))
+revised_gene_meta = rowData(se_reviseAnnotations) %>% tbl_df2()
+rm(se_reviseAnnotations)
+gc()
+
+#Extract feature matrices
+revised_mat_list = purrr::map(revised_by_cond, ~assays(.)$tpm_ratios %>%
+                                replaceNAsWithRowMeans() %>%
+                                quantileNormaliseRows())
+revised_sample_meta = purrr::map(revised_by_cond, ~colData(.) %>% tbl_df2())
+revised_qtl_list = purrr::map(qtls$txrevise_promoters[c("IFNg", "SL1344", "IFNg_SL1344")], ~dplyr::filter(.,p_fdr < 0.1))
+
+#Test for interactions using fixed effects for genotype but allowing for random effect for paired samples
+revised_interaction_res = purrr::pmap(list(revised_qtl_list, revised_mat_list, revised_sample_meta),
+                                      testInteractionWrapper,
+                                      vcf_file, formula_qtl, formula_interaction, id_field_separator = "-", lme4 = TRUE)
+saveRDS(revised_interaction_res, "results/trQTLs/variance_explained/salmonella_txrevise_promoters_interaction_test.rds")
+
+
+
 

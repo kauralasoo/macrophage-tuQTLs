@@ -26,6 +26,7 @@ acldl_fraction = dplyr::group_by(acldl_df, quant, condition) %>%
 
 fraction_df = dplyr::bind_rows(salmonella_fraction, acldl_fraction) %>%
   dplyr::rename(condition_name = condition) %>%
+  dplyr::filter(quant != "txrevise_promoters") %>%
   dplyr::left_join(conditionFriendlyNames()) %>%
   dplyr::left_join(phenotypeFriendlyNames())
 

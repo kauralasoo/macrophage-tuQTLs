@@ -14,7 +14,7 @@ rule run_StringTie:
 		module load samtools-1.6
 		mkdir {params.local_tmp}
 		cp {input} {params.local_tmp}/{wildcards.sample}.bam
-        samtools view -h {params.local_tmp}/{wildcards.sample}.bam | gawk -v strType=2 -f tagXSstrandedData.awk | samtools view -bS - > {params.local_tmp}/{wildcards.sample}.XS.bam
+        samtools view -h {params.local_tmp}/{wildcards.sample}.bam | gawk -v strType=2 -f scripts/tagXSstrandedData.awk | samtools view -bS - > {params.local_tmp}/{wildcards.sample}.XS.bam
 		stringtie {params.local_tmp}/{wildcards.sample}.XS.bam --rf -o {output} -p {threads}
 		rm -r {params.local_tmp}
 		"""

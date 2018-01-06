@@ -40,4 +40,4 @@ echo "test" | python ~/software/utils/submitJobs.py --MEM 28000 --jobname import
 echo "test" | python ~/software/utils/submitJobs.py --MEM 12000 --jobname varExp --ncores 1 --queue normal --command "/software/R-3.4.0/bin/Rscript analysis/trQTLs/estimate_condition_specificity.R"
 
 #Run StringTie
-snakemake --cluster scripts/snakemake_submit.py -np -s run_StringTie.snakefile processed/salmonella/out.txt --jobs 100 --configfile configs/salmonella_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_StringTie.snakefile processed/salmonella/out.txt --jobs 100 --configfile configs/salmonella_trQTL_config.yaml

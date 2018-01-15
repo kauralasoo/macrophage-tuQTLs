@@ -24,5 +24,5 @@ df = as.data.frame(variant_ranges) %>%
   dplyr::rename(chr = seqnames, pos = start)
 
 gz1 <- gzfile("processed/annotations/fgwas/fgwas_annotations.txt.gz", "w")
-write.table(df, gz1)
+write.table(df, gz1, sep = "\t", quote = FALSE, row.names = FALSE)
 close(gz1)

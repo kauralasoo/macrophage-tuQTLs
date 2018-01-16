@@ -1,3 +1,6 @@
+import uuid
+import os
+
 #Run StringTie on each bam file
 rule run_StringTie:
 	input:

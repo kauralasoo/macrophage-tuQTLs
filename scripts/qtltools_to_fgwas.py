@@ -1,11 +1,14 @@
 import scipy.stats as st
 import gzip
 import argparse
+from signal import signal, SIGPIPE, SIG_DFL
+signal(SIGPIPE,SIG_DFL)
 
 #st.norm.ppf(q, loc=0, scale=1)
 
 parser = argparse.ArgumentParser(description = "Convert QTLtools output into format suitable for fgwas.", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("--qtltools", help = "Sorted QTLtools output file.")
+parser.add_argument("--perm", help = "QTLtools output from the permutation run.")
 parser.add_argument("--annot", help = "Variant annotations for fgwas (sorted by positition)")
 parser.add_argument("--N", help = "QTL sample size.")
 args = parser.parse_args()
@@ -13,7 +16,17 @@ args = parser.parse_args()
 #Set up input files
 qtltools_file = gzip.open(args.qtltools, 'r')
 fgwas_file = gzip.open(args.annot,'r')
+perm_file = gzip.open(args.perm,'r')
 n_samples = args.N
+
+#Make a directory of phenotypes to be included in the fgwas output
+phenotype_dict = dict()
+for line in perm_file:
+    line = line.decode("utf8").rstrip()
+    fields = line.split()
+    phenotype_id = fields[5]
+    phenotype_dict[phenotype_id] = 1
+perm_file.close()
 
 #Make full header
 header = "SNPID CHR POS Z F N SEGNUMBER"
@@ -41,6 +54,10 @@ for line in qtltools_file:
     pval = float(fields[11])
     effect = float(fields[12])
     af = '0'
+
+    #Exit loop if gene_id not in phentype dict
+    if not(gene_id in phenotype_dict):
+        continue
 
     #Convert gene id to SEGNUMBER
     if gene_id in gene_dict:

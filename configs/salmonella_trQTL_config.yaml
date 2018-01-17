@@ -32,4 +32,7 @@ gwas_traits: ["AD","CEL_2010","CEL","CD","IBD","UC","MS","NAR","PBC","PS","RA_20
 fasta: /nfs/users/nfs_k/ka8/scratch/annotations/GRCh38/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa
 ase_vcf: "/nfs/users/nfs_k/ka8/scratch/projects/macrophage-gxe-study/genotypes/SL1344/imputed_20151005/imputed.86_samples.snps_only.vcf.gz"
 
+#fgwas
+fgwas_annotations: "processed/annotations/fgwas/fgwas_annotations.txt.gz"
+sample_size: 84
 

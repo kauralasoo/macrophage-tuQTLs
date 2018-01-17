@@ -2,7 +2,8 @@ rule map_qtls:
 	input:
 		expand("processed/{{study}}/qtltools/output/{annot_type}/{condition}.permuted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
 		expand("processed/{{study}}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
-		expand("processed/{{study}}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi", annot_type = config["annot_type"], condition = config["conditions"])
+		expand("processed/{{study}}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi", annot_type = config["annot_type"], condition = config["conditions"]),
+		expand("processed/{study}/fgwas/input/{annot_type}/{condition}.fgwas_input.sorted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
 	output:
 		"processed/{study}/out.txt"
 	resources:
@@ -111,5 +112,23 @@ rule index_qtltools_output:
 	threads: 1
 	shell:
 		"tabix -s9 -b10 -e11 -f {input}"
+
+#Convert QTLtools output into format suitable for fgwas
+rule make_fgwas_results:
+	input:
+		"processed/{study}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz"
+	output:
+		"processed/{study}/fgwas/input/{annot_type}/{condition}.fgwas_input.sorted.txt.gz"
+	params:
+		raw_output = "processed/{study}/fgwas/input/{annot_type}/{condition}.fgwas_input.txt.gz"
+	resources:
+		mem = 1000
+	threads: 1
+	shell:
+		"""
+		source activate py3.6
+		python scripts/qtltools_to_fgwas.py --qtltools {input} --annot {config[fgwas_annotations]} --N {config[sample_size]} | gzip > {params.raw_output}
+		(zcat {params.raw_output} | head -n 1 && zcat {params.raw_output} | tail -n +2 | sort -k7,7n -k2,2n -k3,3n ) | gzip > {output}
+		"""
 
 

@@ -5,7 +5,7 @@ rule map_qtls:
 		expand("processed/{{study}}/qtltools/output/{annot_type}/{condition}.permuted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
 		expand("processed/{{study}}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
 		expand("processed/{{study}}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz.tbi", annot_type = config["annot_type"], condition = config["conditions"]),
-		expand("processed/{{study}}/fgwas/input/{annot_type}/{condition}.fgwas_input.sorted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),
+		expand("processed/{{study}}/fgwas/output/{annot_type}/{condition}.params", annot_type = config["annot_type"], condition = config["conditions"]),
 	output:
 		"processed/{study}/out.txt"
 	resources:

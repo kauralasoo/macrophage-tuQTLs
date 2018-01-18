@@ -139,6 +139,6 @@ rule sort_fgwas_results:
 	threads: 2
 	shell:
 		"""
-		(zcat {input} | head -n 1 && zcat {input} | tail -n +2 | sort -k7,7n -k2,2n -k3,3n) | gzip > {output}
+		(zcat {input} | head -n 1 && zcat {input} | tail -n +2 | sort -k7,7n -k2,2n -k3,3n) | gzip > {output} || true
 		"""
 

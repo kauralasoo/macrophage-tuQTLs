@@ -144,3 +144,18 @@ rule sort_fgwas_results:
 		zcat {input} | head -n 1 | gzip > {output} && zcat {input} | tail -n +2 | sort -k7,7n -k2,2n -k3,3n | gzip >> {output}
 		"""
 
+rule run_fgwas:
+	input:
+		"processed/{study}/fgwas/input/{annot_type}/{condition}.fgwas_input.sorted.txt.gz"
+	output:
+		"processed/{study}/fgwas/output/{annot_type}/{condition}.params"
+	params:
+		out_prefix = "processed/{study}/fgwas/output/{annot_type}/{condition}"
+	resources:
+		mem = 4000
+	threads: 1
+	shell:
+		"""
+		module load gsl-1.16
+		fgwas -i {input} -fine -o {params.out_prefix} -w {config[fgwas_model]}
+		"""

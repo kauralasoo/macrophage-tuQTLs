@@ -26,8 +26,8 @@ echo "test" | python ~/software/utils/submitJobs.py --MEM 28000 --jobname import
 
 
 #Map trQTLs
-snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile processed/salmonella/out.txt --jobs 1200 --configfile configs/salmonella_trQTL_config.yaml
-snakemake --cluster scripts/snakemake_submit.py -p -s map_trQTLs.snakefile processed/acLDL/out.txt --jobs 1200 --configfile configs/acLDL_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s map_trQTLs.snakefile processed/salmonella/out.txt --jobs 1200 --configfile configs/salmonella_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit_UT.py -p -s map_trQTLs.snakefile processed/acLDL/out.txt --jobs 1200 --configfile configs/acLDL_trQTL_config.yaml
 
 #Run coloc against all QTLs
 snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile processed/salmonella/coloc_out.txt --jobs 500 --configfile configs/salmonella_trQTL_config.yaml

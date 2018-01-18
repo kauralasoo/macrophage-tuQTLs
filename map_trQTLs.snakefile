@@ -133,7 +133,7 @@ rule sort_fgwas_results:
 	input:
 		"processed/{study}/fgwas/input/{annot_type}/{condition}.fgwas_input.txt.gz"
 	output:
-		"processed/{study}/qtltools/output/{annot_type}/sorted/{condition}.nominal.sorted.txt.gz"
+		"processed/{study}/fgwas/input/{annot_type}/{condition}.fgwas_input.sorted.txt.gz"
 	resources:
 		mem = 1000
 	threads: 2

@@ -1,3 +1,5 @@
+shell.prefix("set +o pipefail; ")
+
 rule map_qtls:
 	input:
 		expand("processed/{{study}}/qtltools/output/{annot_type}/{condition}.permuted.txt.gz", annot_type = config["annot_type"], condition = config["conditions"]),

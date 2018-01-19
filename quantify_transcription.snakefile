@@ -123,6 +123,23 @@ rule reviseAnnotation_quant_salmon:
 		"--index {input.salmon_index} -1 {input.fq1} -2 {input.fq2} -p {threads} "
 		"-o {params.out_prefix}"
 
+#Merge Salmon results
+rule merge_salmon:
+	input:
+		expand("processed/{{study}}/salmon/{{annotation}}/{sample}/quant.sf", sample=config["samples"])
+	output:
+		"processed/{study}/matrices/{annotation}.salmon_txrevise.rds"
+	params:
+		sample_ids = ','.join(config["samples"]),
+		dir = "processed/{study}/salmon/{annotation}"
+	threads: 1
+	resources:
+		mem = 12000
+	shell:
+		"""
+		/software/R-3.4.0/bin/Rscript scripts/merge_Salmon.R -s {params.sample_ids} -d {params.dir} -o {output}
+		"""
+
 #Convert BAMs to bed for leafcutter
 rule leafcutter_bam_to_bed:
 	input:
@@ -211,9 +228,10 @@ rule make_all:
 	input:
 		#expand("processed/{study}/verifyBamID/{sample}.verifyBamID.bestSM", study = config["study"], sample=config["samples"]),
 		#expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
-		expand("processed/{study}/salmon/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"]),
+		#expand("processed/{study}/salmon/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"]),
 		#expand("processed/{study}/featureCounts/{sample}.featureCounts.txt", study = config["study"], sample=config["samples"]),
 		#expand("processed/{study}/ASEcounts/{sample}.ASEcounts", study = config["study"], sample=config["samples"]),
+		expand("processed/{study}/matrices/{annotation}.salmon_txrevise.rds", study = config["study"], annotation=config["annotations"]),
 		#"processed/{study}/leafcutter/leafcutter_perind.counts.gz"
 	output:
 		"processed/{study}/out.txt"
@@ -224,18 +242,6 @@ rule make_all:
 		"echo 'Done' > {output}"
 
 
-#Make sure that all final output files get created
-rule make_macroMap:
-	input:
-		expand("processed/{study}/salmon/ensembl_87/{sample}/quant.sf", study = config["study"], sample=config["samples"]),
-		expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
-	output:
-		"processed/macroMap/out.txt"
-	resources:
-		mem = 100
-	threads: 1
-	shell:
-		"echo 'Done' > {output}"
 
 
 

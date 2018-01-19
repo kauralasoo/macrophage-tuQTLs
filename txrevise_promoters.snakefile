@@ -18,7 +18,7 @@ rule run_txrevise:
 #Iterate over batches
 rule merge_txrevise_batches:
 	input:
-		gff = expand("processed/annotations/txrevise/{{position}}/txrevise_{position}.batch_{batch}_{n_batches}.gff3",
+		gff = expand("processed/annotations/txrevise/{{position}}/txrevise_{{position}}.batch_{batch}_{n_batches}.gff3",
 			batch=[i for i in range(1, config["n_batches"] + 1)],
 			n_batches = config["n_batches"]),
 	output:

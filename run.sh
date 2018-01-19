@@ -4,6 +4,7 @@ snakemake --cluster scripts/snakemake_submit.py -np -s reviseAnnotations.snakefi
 
 #Construct promoter events
 snakemake --cluster scripts/snakemake_submit.py -np -s txrevise_promoters.snakefile processed/annotations/txrevise_promoters/merged/txrevise_promoters.gff3 --jobs 100 --configfile configs/txrevise_promoters_config.yaml
+snakemake --cluster scripts/snakemake_submit.py -np -s txrevise_promoters.snakefile processed/annotations/txrevise/out.txt --jobs 100 --configfile configs/txrevise_promoters_config.yaml
 
 #Quantify gene and transcript expression
 snakemake --cluster scripts/snakemake_submit.py -np -s quantify_transcription.snakefile processed/salmonella/out.txt --jobs 100 --configfile configs/salmonella_trQTL_config.yaml
@@ -26,7 +27,7 @@ echo "test" | python ~/software/utils/submitJobs.py --MEM 28000 --jobname import
 
 
 #Map trQTLs
-snakemake --cluster scripts/snakemake_submit_UT.py -np -s map_trQTLs.snakefile processed/salmonella/out.txt --jobs 1200 --configfile configs/salmonella_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s map_trQTLs.snakefile processed/salmonella/out.txt --jobs 20 --configfile configs/salmonella_trQTL_config.yaml
 snakemake --cluster scripts/snakemake_submit_UT.py -p -s map_trQTLs.snakefile processed/acLDL/out.txt --jobs 1200 --configfile configs/acLDL_trQTL_config.yaml
 
 #Run coloc against all QTLs

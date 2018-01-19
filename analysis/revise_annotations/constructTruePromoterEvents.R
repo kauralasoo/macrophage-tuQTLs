@@ -14,21 +14,30 @@ option_list <- list(
   make_option(c("-b", "--batch"), type="character", default = "NULL", 
               help = "Batch id.", metavar = "path"),
   make_option(c("-o", "--output"), type="character", default = "NULL", 
-              help = "Path to the output folder.", metavar = "path")
+              help = "Path to the output folder.", metavar = "path"),
+  make_option(c("-p", "--position"), type="character", default = "NULL", 
+              help = "Make either promoter events ('start') or 3' end events ('end').", metavar = "path")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Test options
-#opt = list(t = "results/annotations/reviseAnnotations.GRangesList.rds", 
-#           b = "3 10000",
-#           o = "results/txrevise")
+#opt = list(t = "results/annotations/reviseAnnotations.GRangesList.rds",  b = "3 10000", o = "results/txrevise", p = "end")
 
 #Import revised transcript annotations
 revised_granges = readRDS(opt$t)
 
+#Make gene metadata filter
+if(opt$p == "start"){
+  meta_filter = "upstresam"
+} else if(opt$p == "end"){
+  meta_filter = "downstream"
+} else{
+  error("Position (-p) has to be either 'start' or 'end'.")
+}
+
 #Construct gene metadata
 events = txrevise::constructEventMetadata(names(revised_granges)) %>%
-  dplyr::filter(event_type == "upstream")
+  dplyr::filter(event_type == meta_filter)
 all_gene_ids = unique(events$gene_id)
 
 #### Split genes into batches ####
@@ -41,8 +50,8 @@ gene_ids = gene_ids[selection]
 
 #Set up output file names
 batch_id = paste(batch_vector, collapse = "_")
-out_file = file.path(opt$o, paste0("txrevise_promoters.batch_",batch_id, ".gff3"))
-error_file = file.path(opt$o, paste0("failed_genes.batch_",batch_id, ".txt"))
+out_file = file.path(opt$o, paste0("txrevise_",opt$p,".batch_",batch_id, ".gff3"))
+error_file = file.path(opt$o, paste0("failed_genes_",opt$p,".batch_",batch_id, ".txt"))
 
 #Make a safe version of the function
 safe_promoters = purrr::safely(fillMissingInternalExons)
@@ -54,7 +63,7 @@ if(length(gene_ids) > 0){
   for(i in seq_along(gene_ids)){
     transcript_meta = dplyr::filter(events, gene_id == gene_ids[[i]])
     transcripts = revised_granges[transcript_meta$transcript_id]
-    new_transcripts = safe_promoters(transcripts)
+    new_transcripts = safe_promoters(transcripts, type = opt$p)
     if(is.null(new_transcripts$error)){
       alt_promoters[[i]] = new_transcripts$result
     }else{

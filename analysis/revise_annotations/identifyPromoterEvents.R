@@ -71,3 +71,29 @@ plotTranscripts(transcripts)
 new_transcripts = fillMissingInternalExons(transcripts)
 plotTranscripts(new_transcripts)
 
+
+
+#Perform the same analysis for 3'ends
+
+#Identify all promoter events
+end_events = dplyr::filter(revised_gene_metadata, gene_name == "IRF5") %>% 
+  dplyr::filter(group_id %like% "downstream") %>% 
+  dplyr::filter(group_id %like% "grp_2")
+
+transcripts = revised_granges[end_events$transcript_id]
+plotTranscripts(transcripts)
+
+new_transcripts = fillMissingInternalExons(transcripts, type = "end")
+plotTranscripts(new_transcripts)
+
+
+end_events = dplyr::filter(revised_gene_metadata, gene_name == "XRN1") %>% 
+  dplyr::filter(group_id %like% "downstream") %>% 
+  dplyr::filter(group_id %like% "grp_2")
+
+transcripts = revised_granges[end_events$transcript_id]
+plotTranscripts(transcripts)
+
+new_transcripts = fillMissingInternalExons(transcripts, type = "end")
+plotTranscripts(new_transcripts)
+

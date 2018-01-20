@@ -36,5 +36,6 @@ ase_vcf: "/nfs/users/nfs_k/ka8/scratch/projects/macrophage-gxe-study/genotypes/S
 #fgwas
 fgwas_annotations: "processed/annotations/fgwas/fgwas_annotations.txt.gz"
 fgwas_model: "atac_peak+polyA_site+fiveUTR+threeUTR+CDS+intron+promoter+CTCF"
+fgwas_phenotypes: ["Ensembl_87", "reviseAnnotations", "leafcutter", "featureCounts","txrevise_promoters", "txrevise_ends", "txrevise_contained"]
 sample_size: 84
 

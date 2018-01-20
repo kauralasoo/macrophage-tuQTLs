@@ -95,6 +95,27 @@ olaps = findOverlaps(variant_ranges, ctcf, ignore.strand=TRUE)
 variant_ranges$CTCF = 0
 variant_ranges[queryHits(olaps)]$CTCF = 1
 
+#3'end regulating factors
+three_end_factors = readRDS("processed/annotations/fgwas/eCLIP_three_end_factors.rds") %>% 
+  convertChrNames(to = "Ensembl")
+olaps = findOverlaps(variant_ranges, three_end_factors, ignore.strand=TRUE)
+variant_ranges$eCLIP_3end = 0
+variant_ranges[queryHits(olaps)]$eCLIP_3end = 1
+
+#Splicing regulators
+splicing_factors = readRDS("processed/annotations/fgwas/eCLIP_splicing_factors.rds") %>% 
+  convertChrNames(to = "Ensembl")
+olaps = findOverlaps(variant_ranges, splicing_factors, ignore.strand=TRUE)
+variant_ranges$eCLIP_splicing = 0
+variant_ranges[queryHits(olaps)]$eCLIP_splicing = 1
+
+#eCLIP both
+both_factors = readRDS("processed/annotations/fgwas/eCLIP_both_factors.rds") %>% 
+  convertChrNames(to = "Ensembl")
+olaps = findOverlaps(variant_ranges, both_factors, ignore.strand=TRUE)
+variant_ranges$eCLIP_both = 0
+variant_ranges[queryHits(olaps)]$eCLIP_both = 1
+
 #Export fgwas annotations
 df = as.data.frame(variant_ranges) %>% 
   dplyr::select(-width, -strand, -end) %>%

@@ -14,9 +14,6 @@ sample_names = colnames(ensembl_quants)
 annotations = c("txrevise.grp_1_ends","txrevise.grp_2_ends")
 annotation_list = idVectorToList(annotations)
 
-#Make lists of file names
-file_names = purrr::map(annotation_list, ~setNames(file.path("processed/salmonella/salmon/",., sample_names, "quant.sf"), sample_names))
-
 #Import all transcript abundances
 tx_abundances = list('txrevise.grp_1_ends' = readRDS("processed/salmonella/matrices/txrevise.grp_1_ends.salmon_txrevise.rds"),
                      'txrevise.grp_2_ends' = readRDS("processed/salmonella/matrices/txrevise.grp_2_ends.salmon_txrevise.rds"))
@@ -43,9 +40,9 @@ gene_names = data_frame(transcript_id = rownames(abundances)) %>%
 rownames(gene_names) = gene_names$transcript_id
 
 #Filter quants
-abundances_filtered = abundances[gene_names$transcript_id,]
-counts_filtered = counts[gene_names$transcript_id,]
-lengths_filtered = lengths[gene_names$transcript_id,]
+abundances_filtered = abundances[gene_names$transcript_id, colData(ensembl_quants)$sample_id]
+counts_filtered = counts[gene_names$transcript_id, colData(ensembl_quants)$sample_id]
+lengths_filtered = lengths[gene_names$transcript_id, colData(ensembl_quants)$sample_id]
 
 #Calculate abundance ratios
 gene_name_map = dplyr::transmute(gene_names, gene_id = group_id, transcript_id)

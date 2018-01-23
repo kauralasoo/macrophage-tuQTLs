@@ -39,10 +39,16 @@ txrevise_promoters = list(
   IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_promoters/IFNg.permuted.txt.gz"),
   SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_promoters/SL1344.permuted.txt.gz"),
   IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_promoters/IFNg_SL1344.permuted.txt.gz"))
+txrevise_ends = list(
+  naive = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_ends/naive.permuted.txt.gz"),
+  IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_ends/IFNg.permuted.txt.gz"),
+  SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_ends/SL1344.permuted.txt.gz"),
+  IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_ends/IFNg_SL1344.permuted.txt.gz"))
 
 #Put all results into a list
 trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues, tpm = tpm_pvalues,
-                             featureCounts = featureCounts_pvalues, reviseAnnotations_groupwise = revised_groupwise, txrevise_promoters = txrevise_promoters)
+                             featureCounts = featureCounts_pvalues, reviseAnnotations_groupwise = revised_groupwise, txrevise_promoters = txrevise_promoters,
+                             txrevise_ends = txrevise_ends)
 saveRDS(trQTL_min_pvalue_list, "results/trQTLs/salmonella_trQTL_min_pvalues.rds")
 
 

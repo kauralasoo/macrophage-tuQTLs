@@ -12,12 +12,14 @@ salmonella_varexp_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_expl
                               reviseAnnotations = readRDS("results/trQTLs/variance_explained/salmonella_reviseAnnotations_varExp.rds"),
                               leafcutter = readRDS("results/trQTLs/variance_explained/salmonella_leafcutter_varExp.rds"),
                               featureCounts = readRDS("results/trQTLs/variance_explained/salmonella_featureCounts_varExp.rds"),
-                              txrevise_promoters = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_promoters_varExp.rds"))
+                              txrevise_promoters = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_promoters_varExp.rds"),
+                              txrevise_ends = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_ends_varExp.rds"))
 acLDL_varexp_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_explained/acLDL_Ensembl_87_varExp.rds"),
                               reviseAnnotations = readRDS("results/trQTLs/variance_explained/acLDL_reviseAnnotations_varExp.rds"),
                               leafcutter = readRDS("results/trQTLs/variance_explained/acLDL_leafcutter_varExp.rds"),
                               featureCounts = readRDS("results/trQTLs/variance_explained/acLDL_featureCounts_varExp.rds"),
-                              txrevise_promoters = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_promoters_varExp.rds"))
+                              txrevise_promoters = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_promoters_varExp.rds"),
+                              txrevise_ends = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_ends_varExp.rds"))
 
 #Caclulate fractions
 salmonella_fractions = purrr::map(salmonella_varexp_list, ~purrr::map(.,~dplyr::mutate(.,interaction_fraction = interaction/(genotype+interaction))))
@@ -29,14 +31,16 @@ salmonella_test_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_explai
                             reviseAnnotations = readRDS("results/trQTLs/variance_explained/salmonella_reviseAnnotations_interaction_test.rds"),
                             leafcutter = readRDS("results/trQTLs/variance_explained/salmonella_leafcutter_interaction_test.rds"),
                             featureCounts = readRDS("results/trQTLs/variance_explained/salmonella_featureCounts_interaction_test.rds"),
-                            txrevise_promoters = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_promoters_interaction_test.rds"))
+                            txrevise_promoters = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_promoters_interaction_test.rds"),
+                            txrevise_ends = readRDS("results/trQTLs/variance_explained/salmonella_txrevise_ends_interaction_test.rds"))
 acLDL_test_list = list(Ensembl_87 = readRDS("results/trQTLs/variance_explained/acLDL_Ensembl_87_interaction_test.rds"),
                          reviseAnnotations = readRDS("results/trQTLs/variance_explained/acLDL_reviseAnnotations_interaction_test.rds"),
                          leafcutter = readRDS("results/trQTLs/variance_explained/acLDL_leafcutter_interaction_test.rds"),
                          featureCounts = readRDS("results/trQTLs/variance_explained/acLDL_featureCounts_interaction_test.rds"),
-                         txrevise_promoters = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_promoters_interaction_test.rds"))
+                         txrevise_promoters = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_promoters_interaction_test.rds"),
+                         txrevise_ends = readRDS("results/trQTLs/variance_explained/acLDL_txrevise_ends_interaction_test.rds"))
 
-#Merge all test tesults together
+#Merge all test results together
 salmonella_test_df = purrr::map(salmonella_test_list, ~purrr::map_df(., identity, .id = "condition")) %>% 
   purrr::map_df(identity, .id = "quant") 
 acLDL_test_df = purrr::map(acLDL_test_list, ~purrr::map_df(., identity, .id = "condition")) %>% 

@@ -20,7 +20,7 @@ salmonella_df = readRDS("results/trQTLs/variance_explained/salmonella_compiled_v
 acldl_df = readRDS("results/trQTLs/variance_explained/acldl_compiled_varExp.rds")
 qtls_df = dplyr::bind_rows(salmonella_df, acldl_df) %>%
   dplyr::left_join(group_map, by = c("phenotype_id" = "transcript_id")) %>%
-  dplyr::left_join(true_promoters, by = "group_id") %>%
+  #dplyr::left_join(true_promoters, by = "group_id") %>%
   #dplyr::mutate(is_promoter = ifelse(is.na(is_promoter), FALSE, is_promoter)) %>%
   dplyr::mutate(is_response = ifelse(interaction_fraction > 0.5 & p_fdr < 0.1, TRUE, FALSE))
 
@@ -28,6 +28,9 @@ txrevise_events = dplyr::filter(qtls_df, quant == "reviseAnnotations") %>%
   tidyr::separate(phenotype_id, c("ensembl_gene_id","grp", "position", "transcript_id"), sep = "\\.", remove = FALSE)
 
 promoter_events = dplyr::filter(qtls_df, quant == "txrevise_promoters") %>%
+  tidyr::separate(phenotype_id, c("ensembl_gene_id","grp", "position", "transcript_id"), sep = "\\.", remove = FALSE)
+
+end_events = dplyr::filter(qtls_df, quant == "txrevise_ends") %>%
   tidyr::separate(phenotype_id, c("ensembl_gene_id","grp", "position", "transcript_id"), sep = "\\.", remove = FALSE)
 
 #Count all qtls
@@ -38,7 +41,7 @@ other_counts = txrevise_events %>%
 
 #Event names
 event_names = data_frame(position = c("upstream", "contained","downstream"), 
-                         event_type = factor(c("start", "middle", "end"), levels = c("start", "middle", "end")))
+                         event_type = factor(c("promoters", "middle exons", "3' ends"), levels = c("promoters", "middle exons", "3' ends")))
 
 count_df = other_counts %>%
   dplyr::rename(condition_name = condition) %>%
@@ -52,7 +55,8 @@ promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, grou
   theme(axis.title.x = element_blank()) +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
   ylab("Response QTL fraction") +
-  scale_color_manual(name = "condition", values = conditionPalette())
+  scale_color_manual(name = "condition", values = conditionPalette()) + 
+  coord_cartesian(ylim = c(0,0.17))
 ggsave("results/figures/response_fraction_by_event_type.pdf", plot = promoter_plot, height = 2.5, width = 3)
 
 
@@ -62,9 +66,14 @@ promoter_counts = promoter_events %>%
   dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
   dplyr::mutate(response_fraction = response_count/qtl_count)
 
-combined_counts = dplyr::bind_rows(dplyr::filter(other_counts, position != "upstream"), promoter_counts)
+end_counts = end_events %>% 
+  group_by(condition, position) %>% 
+  dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
+  dplyr::mutate(response_fraction = response_count/qtl_count)
 
-event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("promoter", "middle", "end"), levels = c("promoter", "middle", "end")))
+combined_counts = dplyr::bind_rows(dplyr::filter(other_counts, position == "contained"), promoter_counts, end_counts)
+
+event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("promoters", "middle exons", "3' ends"), levels = c("promoters", "middle exons", "3' ends")))
 
 count_df = combined_counts %>%
   dplyr::rename(condition_name = condition) %>%
@@ -79,7 +88,8 @@ promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, grou
   theme(axis.title.x = element_blank()) +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
   ylab("Response QTL fraction") +
-  scale_color_manual(name = "condition", values = conditionPalette())
+  scale_color_manual(name = "condition", values = conditionPalette()) +
+  coord_cartesian(ylim = c(0,0.17))
 ggsave("results/figures/response_fraction_by_promoter.pdf", plot = promoter_plot, height = 2.5, width = 3)
 
 #Perform Fisher's tests

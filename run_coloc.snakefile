@@ -26,7 +26,7 @@ rule run_coloc:
 		mem = 12000
 	threads: 1
 	shell:
-		"/software/R-3.4.0/bin/Rscript analysis/coloc/{wildcards.study}_GWAS_run_coloc.R "
+		"/software/R-3.4.0/bin/Rscript analysis/coloc/GWAS_run_coloc.R "
 		"--phenotype {wildcards.phenotype} --window {wildcards.coloc_window} "
 		"--gwas {wildcards.gwas} --dir {config[gwas_dir]} --outdir {params.outdir} "
 		"--qtl {params.qtl_dir} --samplesizes {config[sample_sizes]} "

@@ -22,12 +22,18 @@ option_list <- list(
   make_option(c("-o", "--outdir"), type="character", default=NULL,
               help="Path to the output directory.", metavar = "type"),
   make_option(c("-s", "--samplesizes"), type="character", default=NULL,
-              help="Path to the tab-separated text file with condition names and sample sizes.", metavar = "type")
+              help="Path to the tab-separated text file with condition names and sample sizes.", metavar = "type"),
+  make_option(c("-v", "--gwasvarinfo"), type="character", default=NULL,
+              help="Variant infromation file for the GWAS dataset.", metavar = "type"),
+  make_option(c("-f", "--qtlvarinfo"), type="character", default=NULL,
+              help="Variant information file for the QTL dataset.", metavar = "type"),
+  make_option(c("-l", "--gwaslist"), type="character", default=NULL,
+              help="Path to the list of GWAS studies.", metavar = "type")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Debugging
-#opt = list(g = "IBD", w = "2e5", p = "featureCounts", d = "/Volumes/JetDrive/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/", q = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt")
+#opt = list(g = "IBD", w = "2e5", p = "featureCounts", d = "/Volumes/JetDrive/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/", q = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt", v = "results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz", f = "results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz", l = "analysis/data/gwas/GWAS_summary_stat_list.labeled.txt")
 
 #Extract parameters for CMD options
 gwas_id = opt$g
@@ -37,13 +43,16 @@ gwas_dir = opt$d
 qtl_dir = opt$q
 outdir = opt$o
 sample_size_path = opt$s
+gwas_var_path = opt$v
+qtl_var_path = opt$f
+gwas_list = opt$l
 
 #Import variant information
-GRCh38_variants = importVariantInformation("results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz")
-GRCh37_variants = importVariantInformation("results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz")
+gwas_var_info = importVariantInformation(gwas_var_path)
+qtl_var_info = importVariantInformation(qtl_var_path)
 
 #Import list of GWAS studies
-gwas_stats_labeled = readr::read_tsv("analysis/data/gwas/GWAS_summary_stat_list.labeled.txt", col_names = c("trait","file_name","type"))
+gwas_stats_labeled = readr::read_tsv(gwas_list, col_names = c("trait","file_name","type"), col_type = "ccc")
 
 #Import sample sizes
 sample_sizes = readr::read_tsv(sample_size_path, col_names = c("condition_name", "sample_size"), col_types = "cc")
@@ -67,8 +76,8 @@ qtl_pairs = purrr::map_df(qtl_df_list, identity) %>% unique()
 coloc_res_list = purrr::map2(phenotype_values$qtl_summary_list, phenotype_values$sample_sizes, 
                              ~colocMolecularQTLsByRow(qtl_pairs, qtl_summary_path = .x, 
                                                       gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), 
-                                                      GRCh37_variants = GRCh37_variants,
-                                                      GRCh38_variants = GRCh38_variants, 
+                                                      gwas_variant_info = gwas_var_info,
+                                                      qtl_variant_info = qtl_var_info, 
                                                       N_qtl = .y, cis_dist = cis_window))
 
 #Export results

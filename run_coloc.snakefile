@@ -17,7 +17,7 @@ rule run_coloc:
 		"processed/{study}/coloc/{gwas}.{phenotype}.{coloc_window}.txt"
 	params:
 		outdir = "processed/{study}/coloc",
-		qtl_dir = "processed/{study}/qtltools/output/"
+		qtl_dir = "processed/{study}/qtltools/output/",
 		phenotype = "{phenotype}",
 		gwas = "{gwas}",
 		coloc_window = "{coloc_window}"

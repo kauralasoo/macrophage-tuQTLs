@@ -17,6 +17,7 @@ rule run_coloc:
 		"processed/{study}/coloc/{gwas}.{phenotype}.{coloc_window}.txt"
 	params:
 		outdir = "processed/{study}/coloc",
+		qtl_dir = "processed/{study}/qtltools/output/"
 		phenotype = "{phenotype}",
 		gwas = "{gwas}",
 		coloc_window = "{coloc_window}"
@@ -26,4 +27,4 @@ rule run_coloc:
 	threads: 1
 	shell:
 		"/software/R-3.4.0/bin/Rscript analysis/coloc/{wildcards.study}_GWAS_run_coloc.R --phenotype {wildcards.phenotype} --window {wildcards.coloc_window} "
-		"--gwas {wildcards.gwas} --dir {config[gwas_dir]} --outdir {params.outdir}"
+		"--gwas {wildcards.gwas} --dir {config[gwas_dir]} --outdir {params.outdir} --qtl {params.qtl_dir} --samplesizes {config[sample_sizes]}"

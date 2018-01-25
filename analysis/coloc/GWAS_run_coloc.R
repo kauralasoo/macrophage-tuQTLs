@@ -60,7 +60,7 @@ sample_sizes = readr::read_tsv(sample_size_path, col_names = c("condition_name",
 sample_sizes_list = as.list(sample_sizes$sample_size)
 names(sample_sizes_list) = sample_sizes$condition_name
 
-#Construct a new QTL list 
+#Construct a new QTL list
 phenotype_values = constructQtlListForColoc(phenotype, qtl_dir, sample_sizes_list)
 
 #Spcecify the location of the GWAS summary stats file
@@ -89,4 +89,4 @@ coloc_output = file.path(outdir, paste(gwas_id, phenotype, opt$w, "txt", sep = "
 write.table(coloc_hits, coloc_output, sep = "\t", quote = FALSE, row.names = FALSE)
 
 #Debugging example
-#colocMolecularQTLs(qtl_pairs[1,], qtl_summary_list$Ctrl, gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), GRCh37_variants, GRCh38_variants, N_qtl = 2e5)
+#colocMolecularQTLs(qtl_pairs[1,], phenotype_values$qtl_summary_list$naive, gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), gwas_var_info, qtl_var_info, N_qtl = 84, cis_dist = 2e5)

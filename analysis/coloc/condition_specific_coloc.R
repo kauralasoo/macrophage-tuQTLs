@@ -4,16 +4,21 @@ library("purrr")
 library("ggplot2")
 library("devtools")
 library("UpSetR")
+library("data.table")
 load_all("../seqUtils/")
 load_all("analysis/housekeeping/")
 
 #Import coloc overlaps
 salmonella_olaps = readRDS("results/coloc/salmonella_GWAS_coloc_hits.rds")
+salmonella_olaps$txrevise_contained = dplyr::filter(salmonella_olaps$reviseAnnotations, phenotype_id %like% "contained")
 coloc_df = purrr::map_df(salmonella_olaps, identity, .id = "quant")
 
 #Import QTL condition-specificity estimates
 salmonella_df = readRDS("results/trQTLs/variance_explained/salmonella_compiled_varExp.rds")
-salmonella_effects = dplyr::select(salmonella_df, quant, condition, phenotype_id, snp_id, interaction_fraction, p_fdr)
+contained_df = dplyr::filter(salmonella_df, quant == "reviseAnnotations", phenotype_id %like% 'contained') %>% 
+  dplyr::mutate(quant = "txrevise_contained")
+salmonella_effects = dplyr::bind_rows(salmonella_df, contained_df) %>% 
+  dplyr::select(quant, condition, phenotype_id, snp_id, interaction_fraction, p_fdr)
 
 #Link response QTLs to coloc results
 response_colocs = dplyr::left_join(coloc_df, salmonella_effects, by = c("quant", "phenotype_id", "snp_id")) %>% 
@@ -35,11 +40,15 @@ response_coloc_hits = dplyr::filter(filtered_colocs, is_response)
 #### AcLDL ####
 #Import coloc overlaps
 salmonella_olaps = readRDS("results/coloc/acLDL_GWAS_coloc_hits.rds")
+salmonella_olaps$txrevise_contained = dplyr::filter(salmonella_olaps$reviseAnnotations, phenotype_id %like% "contained")
 acldl_coloc_df = purrr::map_df(salmonella_olaps, identity, .id = "quant")
 
 #Import QTL condition-specificity estimates
 salmonella_df = readRDS("results/trQTLs/variance_explained/acLDL_compiled_varExp.rds")
-salmonella_effects = dplyr::select(salmonella_df, quant, condition, phenotype_id, snp_id, interaction_fraction, p_fdr)
+contained_df = dplyr::filter(salmonella_df, quant == "reviseAnnotations", phenotype_id %like% 'contained') %>% 
+  dplyr::mutate(quant = "txrevise_contained")
+salmonella_effects = dplyr::bind_rows(salmonella_df, contained_df) %>% 
+  dplyr::select(quant, condition, phenotype_id, snp_id, interaction_fraction, p_fdr)
 
 #Link response QTLs to coloc results
 response_colocs = dplyr::left_join(acldl_coloc_df, salmonella_effects, by = c("quant", "phenotype_id", "snp_id")) %>% 
@@ -77,16 +86,29 @@ cond_specific_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) 
 cond_fraction = cond_specific_colocs %>%
   dplyr::mutate(has_response = ifelse(has_response, "response", "other")) %>%
   tidyr::spread(has_response, response_count) %>%
+  dplyr::mutate(response = ifelse(is.na(response), 0, response)) %>%
   dplyr::mutate(response_fraction = response/(other+response))
+write.table(cond_fraction, "results/tables/coloc_response_fraction.txt", sep = "\t", quote = F, row.names = F)
 
-coloc_response_plot = ggplot(cond_fraction, aes(x = phenotype, y = response_fraction)) + 
+#Compare quant methods
+coloc_response_plot = dplyr::filter(cond_fraction, quant %in% c("Ensembl_87","featureCounts","leafcutter","reviseAnnotations")) %>%
+  ggplot(aes(x = phenotype, y = response_fraction)) + 
   geom_bar(stat = "identity") + 
-  coord_flip() +
+  coord_flip(ylim = c(0,0.3)) +
   theme_light() +
   xlab("") +
   ylab("Fraction of colocalisations \n that are response QTLs")
 ggsave("results/figures/coloc_response_fraction.pdf",coloc_response_plot, width = 3, height = 3)
 
+#Compare positions
+coloc_response_plot = dplyr::filter(cond_fraction, quant %in% c("leafcutter","txrevise_promoters","txrevise_contained","txrevise_ends")) %>%
+  ggplot(aes(x = phenotype, y = response_fraction)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip(ylim = c(0,0.3)) +
+  theme_light() +
+  xlab("") +
+  ylab("Fraction of colocalisations \n that are response QTLs")
+ggsave("results/figures/coloc_splicing_response_fraction.pdf",coloc_response_plot, width = 2.8, height = 3)
 
 
 
@@ -109,12 +131,19 @@ unique_trait_gene_pairs = dplyr::select(all_colocs, phenotype, summarised_trait,
 
 overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
   tidyr::spread(phenotype, id) %>%
-  dplyr::mutate_at(.vars = vars(3:6), 
+  dplyr::mutate_at(.vars = vars(3:9), 
                    .funs = function(x){ifelse(is.na(x), 0,1)}) %>%
   as.data.frame()
 
+#Comapre different quantification methods
 pdf("results/figures/coloc_GWAS_overlap_UpSetR.pdf", width = 4.5, height = 3.5, onefile = FALSE)
 upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript usage", "Leafcutter", "txrevise")), 
+      order.by = "freq", keep.order = TRUE)
+dev.off()
+
+#Comapre only splicing methods
+pdf("results/figures/coloc_GWAS_splicing_overlap_UpSetR.pdf", width = 4.5, height = 3.5, onefile = FALSE)
+upset(as.data.frame(overlap_counts), sets = rev(c("Leafcutter", "promoters", "middle exons", "3' ends")), 
       order.by = "freq", keep.order = TRUE)
 dev.off()
 

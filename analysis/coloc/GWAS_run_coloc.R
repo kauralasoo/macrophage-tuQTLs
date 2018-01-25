@@ -13,11 +13,11 @@ option_list <- list(
               help="Type of QTLs used for coloc.", metavar = "type"),
   make_option(c("-w", "--window"), type="character", default=NULL,
               help="Size of the cis window.", metavar = "type"),
-  make_option(c("-g", "--gwas"), type="character", default=NULL,
+  make_option(c("--gwas"), type="character", default=NULL,
               help="Name of the GWAS trait", metavar = "type"),
   make_option(c("-d", "--dir"), type="character", default=NULL,
               help="Path to GWAS summary stats directory.", metavar = "type"),
-  make_option(c("-q", "--qtl"), type="character", default=NULL,
+  make_option(c("--qtl"), type="character", default=NULL,
               help="Path to the QTL directory.", metavar = "type"),
   make_option(c("-o", "--outdir"), type="character", default=NULL,
               help="Path to the output directory.", metavar = "type"),
@@ -36,11 +36,11 @@ opt <- parse_args(OptionParser(option_list=option_list))
 #opt = list(g = "IBD", w = "2e5", p = "txrevise_ends", d = "~/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/", q = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt", gwasvarinfo = "results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz", qtlvarinfo = "results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz", gwaslist = "analysis/data/gwas/GWAS_summary_stat_list.labeled.txt")
 
 #Extract parameters for CMD options
-gwas_id = opt$g
+gwas_id = opt$gwas
 cis_window = as.numeric(opt$w)
 phenotype = opt$p
 gwas_dir = opt$d
-qtl_dir = opt$q
+qtl_dir = opt$qtl
 outdir = opt$o
 sample_size_path = opt$s
 gwas_var_path = opt$gwasvarinfo
@@ -61,6 +61,9 @@ sample_sizes_list = as.list(sample_sizes$sample_size)
 names(sample_sizes_list) = sample_sizes$condition_name
 
 #Construct a new QTL list 
+print(phenotype)
+print(qtl_dir)
+print(sample_sizes_list)
 phenotype_values = constructQtlListForColoc(phenotype, qtl_dir, sample_sizes_list)
 
 #Spcecify the location of the GWAS summary stats file
@@ -75,6 +78,8 @@ qtl_pairs = purrr::map_df(qtl_df_list, identity) %>% unique()
 print("Pre-filtering completed.")
 
 #Test for coloc
+print(phenotype_values$sample_sizes)
+print(phenotype_values$qtl_summary_list)
 coloc_res_list = purrr::map2(phenotype_values$qtl_summary_list, phenotype_values$sample_sizes, 
                              ~colocMolecularQTLsByRow(qtl_pairs, qtl_summary_path = .x, 
                                                       gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), 

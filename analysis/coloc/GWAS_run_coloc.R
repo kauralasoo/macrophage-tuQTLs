@@ -33,7 +33,7 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Debugging
-#opt = list(g = "IBD", w = "2e5", p = "featureCounts", d = "/Volumes/JetDrive/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/", q = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt", v = "results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz", f = "results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz", l = "analysis/data/gwas/GWAS_summary_stat_list.labeled.txt")
+#opt = list(g = "IBD", w = "2e5", p = "txrevise_ends", d = "~/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/", q = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt", gwasvarinfo = "results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz", qtlvarinfo = "results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz", gwaslist = "analysis/data/gwas/GWAS_summary_stat_list.labeled.txt")
 
 #Extract parameters for CMD options
 gwas_id = opt$g
@@ -50,6 +50,7 @@ gwas_list = opt$gwaslist
 #Import variant information
 gwas_var_info = importVariantInformation(gwas_var_path)
 qtl_var_info = importVariantInformation(qtl_var_path)
+print("Variant information imported.")
 
 #Import list of GWAS studies
 gwas_stats_labeled = readr::read_tsv(gwas_list, col_names = c("trait","file_name","type"), col_type = "ccc")
@@ -68,9 +69,10 @@ gwas_prefix = file.path(gwas_dir, gwas_file_name)
 
 #Prefilter coloc candidates
 qtl_df_list = prefilterColocCandidates(phenotype_values$min_pvalues, gwas_prefix, 
-                                       GRCh37_variants, fdr_thresh = 0.1, 
+                                       gwas_variant_info = gwas_var_info, fdr_thresh = 0.1, 
                                        overlap_dist = 1e5, gwas_thresh = 1e-5)
 qtl_pairs = purrr::map_df(qtl_df_list, identity) %>% unique()
+print("Pre-filtering completed.")
 
 #Test for coloc
 coloc_res_list = purrr::map2(phenotype_values$qtl_summary_list, phenotype_values$sample_sizes, 
@@ -79,6 +81,7 @@ coloc_res_list = purrr::map2(phenotype_values$qtl_summary_list, phenotype_values
                                                       gwas_variant_info = gwas_var_info,
                                                       qtl_variant_info = qtl_var_info, 
                                                       N_qtl = .y, cis_dist = cis_window))
+print("Coloc completed.")
 
 #Export results
 coloc_hits = purrr::map_df(coloc_res_list, identity, .id = "condition_name") %>% dplyr::arrange(gwas_lead)

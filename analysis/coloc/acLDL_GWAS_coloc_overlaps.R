@@ -86,9 +86,28 @@ featureCounts_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".fea
   dplyr::left_join(featureCounts_name_map, by = "phenotype_id") %>%
   dplyr::select(-.row)
 
+#txrevise promoters
+revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_promoters.2e5.txt", 
+                                  coloc_prefix = "processed/acLDL/coloc/", 
+                                  PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
+                                  gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
+  dplyr::left_join(revised_name_map, by = "phenotype_id") %>%
+  dplyr::select(-.row)
+
+#txrevise_ends
+revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_ends.2e5.txt", 
+                                  coloc_prefix = "processed/acLDL/coloc/", 
+                                  PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
+                                  gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
+  dplyr::left_join(revised_name_map, by = "phenotype_id") %>%
+  dplyr::select(-.row)
+
 #Put all GWAS overlaps into a single list
 gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, reviseAnnotations = revised_200kb_hits, 
-                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, featureCounts = featureCounts_200kb_hits)
+                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, 
+                  featureCounts = featureCounts_200kb_hits, 
+                  txrevise_promoters = promoters_200kb_hits,
+                  txrevise_ends = ends_200kb_hits)
 saveRDS(gwas_olaps, "results/coloc/acLDL_GWAS_coloc_hits.rds")
 gwas_olaps = readRDS("results/coloc/acLDL_GWAS_coloc_hits.rds")
 
@@ -200,43 +219,3 @@ plot_data = purrr::by_row(featureCounts_hits,
 plots = purrr::by_row(plot_data, ~plotColoc(.$data[[1]], .$plot_title), .to = "plot")
 plot_list = setNames(plots$plot, plots$plot_title)
 savePlotList(plot_list, "processed/acLDL/coloc_plots/featureCounts/")
-
-
-#Count overlaps by quantification strategy (by gene-trait pair)
-unique_trait_gene_pairs = purrr::map_df(gwas_olaps, identity, .id = "phenotype") %>% 
-  dplyr::filter(trait != "CAD_2017") %>% 
-  dplyr::select(phenotype, trait, gene_name) %>% 
-  unique() %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name))
-
-overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = paste(trait, gene_name, sep = "_")) %>% 
-  tidyr::spread(phenotype, id) %>%
-  dplyr::mutate(ensembl_87 = ifelse(is.na(ensembl_87), 0, 1),
-                tpm = ifelse(is.na(tpm), 0, 1),
-                revisedAnnotation = ifelse(is.na(revisedAnnotation), 0, 1),
-                leafcutter = ifelse(is.na(leafcutter), 0, 1),
-                featureCounts = ifelse(is.na(featureCounts), 0, 1))
-
-upset(as.data.frame(overlap_counts), sets = c("featureCounts","tpm", "ensembl_87", "revisedAnnotation", "leafcutter"), sets.bar.color = "#56B4E9",
-      order.by = "freq")
-
-#Count overlaps by quantification strategy (by gene only)
-unique_trait_gene_pairs = purrr::map_df(gwas_olaps, identity, .id = "phenotype") %>% 
-  dplyr::filter(trait != "CAD_2017") %>% 
-  dplyr::select(phenotype, gene_name) %>% 
-  unique() %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name))
-
-overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = paste(gene_name, sep = "_")) %>% 
-  tidyr::spread(phenotype, id) %>%
-  dplyr::mutate(ensembl_87 = ifelse(is.na(ensembl_87), 0, 1),
-                tpm = ifelse(is.na(tpm), 0, 1),
-                revisedAnnotation = ifelse(is.na(revisedAnnotation), 0, 1),
-                leafcutter = ifelse(is.na(leafcutter), 0, 1),
-                featureCounts = ifelse(is.na(featureCounts), 0, 1))
-
-pdf("results/figures/acLDL_GWAS_overlap_UpSetR.pdf", width = 6, height = 5, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("featureCounts", "ensembl_87", "leafcutter", "revisedAnnotation")), 
-      order.by = "freq", keep.order = TRUE)
-dev.off()
-

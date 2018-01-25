@@ -15,6 +15,9 @@ se_reviseAnnotations = readRDS("results/SummarizedExperiments/salmonella_salmon_
 se_leafcutter = readRDS("results/SummarizedExperiments/salmonella_leafcutter_counts.rds")
 se_tpm = readRDS("results/SummarizedExperiments/salmonella_salmon_gene_abundances.rds")
 se_featureCounts = readRDS("results/SummarizedExperiments/salmonella_featureCounts.rds")
+se_promoters = readRDS("results/SummarizedExperiments/salmonella_salmon_txrevise_promoters.rds")
+se_ends = readRDS("results/SummarizedExperiments/salmonella_salmon_txrevise_ends.rds")
+
 
 #Identify genes in the MHC region that should be excluded
 mhc_ensembl = dplyr::filter(tbl_df2(rowData(se_ensembl)), chr == "6", transcript_start > 28510120, transcript_start < 33480577) %>%
@@ -86,9 +89,29 @@ featureCounts_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".fea
   dplyr::left_join(featureCounts_name_map, by = "phenotype_id") %>%
   dplyr::select(-.row)
 
+#txrevise promoters
+promoters_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_promoters.2e5.txt", 
+                                  coloc_prefix = "processed/salmonella/coloc/",
+                                  PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
+                                  gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
+  dplyr::left_join(revised_name_map, by = "phenotype_id") %>%
+  dplyr::select(-.row)
+
+#txrevise ends
+#revisedAnnotations
+ends_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_ends.2e5.txt", 
+                                  coloc_prefix = "processed/salmonella/coloc/",
+                                  PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
+                                  gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
+  dplyr::left_join(revised_name_map, by = "phenotype_id") %>%
+  dplyr::select(-.row)
+
 #Put all GWAS overlaps into a single list
 gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, reviseAnnotations = revised_200kb_hits, 
-                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, featureCounts = featureCounts_200kb_hits)
+                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, 
+                  featureCounts = featureCounts_200kb_hits, 
+                  txrevise_promoters = promoters_200kb_hits,
+                  txrevise_ends = ends_200kb_hits)
 saveRDS(gwas_olaps, "results/coloc/salmonella_GWAS_coloc_hits.rds")
 gwas_olaps = readRDS("results/coloc/salmonella_GWAS_coloc_hits.rds")
 
@@ -201,49 +224,3 @@ plots = purrr::by_row(plot_data, ~plotColoc(.$data[[1]], .$plot_title), .to = "p
 plot_list = setNames(plots$plot, plots$plot_title)
 savePlotList(plot_list, "processed/acLDL/coloc_plots/featureCounts/")
 
-
-#Count overlaps by quantification strategy (by gene-trait pair)
-unique_trait_gene_pairs = purrr::map_df(gwas_olaps, identity, .id = "phenotype") %>% 
-  dplyr::filter(trait != "CAD_2017") %>% 
-  dplyr::select(phenotype, trait, gene_name) %>% 
-  unique() %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name)) %>%
-  dplyr::rename(quant = phenotype) %>%
-  dplyr::left_join(phenotypeFriendlyNames()) %>%
-  dplyr::select(-quant) %>%
-  dplyr::filter(!is.na(phenotype))
-
-overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = paste(trait, gene_name, sep = "_")) %>% 
-  tidyr::spread(phenotype, id) %>%
-  dplyr::mutate(ensembl_87 = ifelse(is.na(ensembl_87), 0, 1),
-                tpm = ifelse(is.na(tpm), 0, 1),
-                revisedAnnotation = ifelse(is.na(revisedAnnotation), 0, 1),
-                leafcutter = ifelse(is.na(leafcutter), 0, 1),
-                featureCounts = ifelse(is.na(featureCounts), 0, 1))
-
-upset(as.data.frame(overlap_counts), sets = c("featureCounts","tpm", "ensembl_87", "revisedAnnotation", "leafcutter"), sets.bar.color = "#56B4E9",
-      order.by = "freq")
-
-#Count overlaps by quantification strategy (by gene only)
-unique_trait_gene_pairs = purrr::map_df(gwas_olaps, identity, .id = "phenotype") %>% 
-  dplyr::filter(trait != "CAD_2017") %>% 
-  dplyr::select(phenotype, gene_name) %>% 
-  unique() %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "FCGR2A;RP11-25K21.6", "FCGR2A", gene_name)) %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "VAMP8;VAMP5", "VAMP8", gene_name)) %>%
-  dplyr::mutate(gene_name = ifelse(gene_name == "APOPT1;RP11-73M18.2", "APOPT1", gene_name)) %>%
-  dplyr::rename(quant = phenotype) %>%
-  dplyr::left_join(phenotypeFriendlyNames()) %>%
-  dplyr::select(-quant) %>%
-  dplyr::filter(!is.na(phenotype), !is.na(gene_name))
-
-overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
-  tidyr::spread(phenotype, id) %>%
-  dplyr::mutate_at(.cols = vars(2:5), 
-                   .funs = function(x){ifelse(is.na(x), 0,1)}) %>%
-  as.data.frame()
-
-pdf("results/figures/salmonella_GWAS_overlap_UpSetR.pdf", width = 6, height = 4, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript ratio", "Leafcutter", "reviseAnnotations")), 
-      order.by = "freq", keep.order = TRUE)
-dev.off()

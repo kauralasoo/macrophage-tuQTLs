@@ -33,7 +33,8 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 #Debugging
-#opt = list(g = "IBD", w = "2e5", p = "txrevise_ends", d = "~/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/", q = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt", gwasvarinfo = "results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz", qtlvarinfo = "results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz", gwaslist = "analysis/data/gwas/GWAS_summary_stat_list.labeled.txt")
+#opt = list(gwas = "IBD", w = "2e5", p = "txrevise_ends", d = "~/datasets/Inflammatory_GWAS/", o = "results/acLDL/coloc/coloc_lists/", qtl = "processed/salmonella/qtltools/output/", s = "analysis/data/sample_lists/salmonella_coloc_sample_sizes.txt", gwasvarinfo = "results/genotypes/salmonella/GRCh37/imputed.86_samples.variant_information.GRCh37.txt.gz", qtlvarinfo = "results/genotypes/salmonella/imputed.86_samples.variant_information.txt.gz", gwaslist = "analysis/data/gwas/GWAS_summary_stat_list.labeled.txt")
+#opt$d = "/nfs/users/nfs_k/ka8/scratch/datasets/Inflammatory_GWAS/"
 
 #Extract parameters for CMD options
 gwas_id = opt$gwas
@@ -56,15 +57,12 @@ print("Variant information imported.")
 gwas_stats_labeled = readr::read_tsv(gwas_list, col_names = c("trait","file_name","type"), col_type = "ccc")
 
 #Import sample sizes
-sample_sizes = readr::read_tsv(sample_size_path, col_names = c("condition_name", "sample_size"), col_types = "cc")
+sample_sizes = readr::read_tsv(sample_size_path, col_names = c("condition_name", "sample_size"), col_types = "ci")
 sample_sizes_list = as.list(sample_sizes$sample_size)
 names(sample_sizes_list) = sample_sizes$condition_name
 
 
 #Construct a new QTL list 
-print(phenotype)
-print(qtl_dir)
-print(sample_sizes_list)
 phenotype_values = constructQtlListForColoc(phenotype, qtl_dir, sample_sizes_list)
 
 #Spcecify the location of the GWAS summary stats file
@@ -79,8 +77,6 @@ qtl_pairs = purrr::map_df(qtl_df_list, identity) %>% unique()
 print("Pre-filtering completed.")
 
 #Test for coloc
-print(phenotype_values$sample_sizes)
-print(phenotype_values$qtl_summary_list)
 coloc_res_list = purrr::map2(phenotype_values$qtl_summary_list, phenotype_values$sample_sizes, 
                              ~colocMolecularQTLsByRow(qtl_pairs, qtl_summary_path = .x, 
                                                       gwas_summary_path = paste0(gwas_prefix, ".sorted.txt.gz"), 

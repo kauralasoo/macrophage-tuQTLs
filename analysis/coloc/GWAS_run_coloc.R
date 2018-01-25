@@ -23,11 +23,11 @@ option_list <- list(
               help="Path to the output directory.", metavar = "type"),
   make_option(c("-s", "--samplesizes"), type="character", default=NULL,
               help="Path to the tab-separated text file with condition names and sample sizes.", metavar = "type"),
-  make_option(c("-v", "--gwasvarinfo"), type="character", default=NULL,
+  make_option(c( "--gwasvarinfo"), type="character", default=NULL,
               help="Variant infromation file for the GWAS dataset.", metavar = "type"),
-  make_option(c("-f", "--qtlvarinfo"), type="character", default=NULL,
+  make_option(c("--qtlvarinfo"), type="character", default=NULL,
               help="Variant information file for the QTL dataset.", metavar = "type"),
-  make_option(c("-l", "--gwaslist"), type="character", default=NULL,
+  make_option(c("--gwaslist"), type="character", default=NULL,
               help="Path to the list of GWAS studies.", metavar = "type")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -43,9 +43,9 @@ gwas_dir = opt$d
 qtl_dir = opt$q
 outdir = opt$o
 sample_size_path = opt$s
-gwas_var_path = opt$v
-qtl_var_path = opt$f
-gwas_list = opt$l
+gwas_var_path = opt$gwasvarinfo
+qtl_var_path = opt$qtlvarinfo
+gwas_list = opt$gwaslist
 
 #Import variant information
 gwas_var_info = importVariantInformation(gwas_var_path)

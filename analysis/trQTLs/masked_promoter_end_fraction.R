@@ -17,3 +17,16 @@ orig_promoters_qtls = purrr::map_df(qtls$reviseAnnotations, ~dplyr::filter(.,gro
                                 dplyr::mutate(p_fdr = p.adjust(p_beta, method = "fdr")) %>% 
                                 dplyr::filter(p_fdr < 0.1) %>% nrow())
 new_promoters_qtls/orig_promoters_qtls
+
+
+#Contained QTLs
+contained_qtls = purrr::map_df(qtls$reviseAnnotations, ~dplyr::filter(.,group_id %like% "contained") %>% 
+                                      dplyr::mutate(p_fdr = p.adjust(p_beta, method = "fdr")) %>% 
+                                      dplyr::filter(p_fdr < 0.1) %>% nrow())
+
+#Fraction of all tuQTLs that
+(new_end_qtls + new_promoters_qtls)/(new_end_qtls + new_promoters_qtls + contained_qtls)
+
+
+
+

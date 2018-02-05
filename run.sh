@@ -30,7 +30,7 @@ snakemake --cluster scripts/snakemake_submit.py -np -s map_trQTLs.snakefile proc
 
 #Run fgwas on all QTLs
 snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_fgwas.snakefile processed/salmonella/out.txt --jobs 30 --configfile configs/salmonella_trQTL_config.yaml
-snakemake --cluster scripts/snakemake_submit_UT.py -p -s run_fgwas.snakefile processed/acLDL/out.txt --jobs 1200 --configfile configs/acLDL_trQTL_config.yaml
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_fgwas.snakefile processed/acLDL/out.txt --jobs 1200 --configfile configs/acLDL_trQTL_config.yaml
 
 #Run coloc against all QTLs
 snakemake --cluster scripts/snakemake_submit.py -np -s run_coloc.snakefile processed/salmonella/coloc_out.txt --jobs 500 --configfile configs/salmonella_trQTL_config.yaml

@@ -110,9 +110,39 @@ txrevise_vs_featureCounts = comparePairwise(method_list)
 method_list = list(Ensembl_87 = ensembl_qtls, featureCounts = featureCounts_qtls)
 ensmebl_vs_featureCounts = comparePairwise(method_list)
 
+#Diagonal
+diag_df = data_frame(m1 = unique(replication_df$m1), m2 = unique(replication_df$m1), replication = 1)
+
+replication_df = dplyr::bind_rows(leafcutter_vs_txrevise,
+                 leafcutter_vs_ensembl,
+                 leafcutter_vs_featureCounts,
+                 txrevise_vs_ensembl,
+                 txrevise_vs_featureCounts,
+                 ensmebl_vs_featureCounts, 
+                 diag_df)
+
+#Rename stuff
+rep_df = dplyr::left_join(replication_df, phenotypeFriendlyNames(), by = c("m1" = "quant")) %>%
+  dplyr::rename(p1 = phenotype) %>%
+  dplyr::left_join(phenotypeFriendlyNames(), by = c("m2" = "quant")) %>%
+  dplyr::rename(p2 = phenotype)
+
+#Make a heatmap of sharing
+qtl_replic_plot = ggplot(rep_df, aes(x = p2, y = p1, fill = replication, label = round(replication,2))) + geom_tile() +
+  scale_fill_gradient2(space = "Lab", low = "#4575B4", mid = "#FFFFBF", high = "#E24C36", midpoint = 0, limits = c(0,1)) +
+  theme_light() +
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) +
+  theme(axis.text.x = element_text(angle = 15, hjust = 1)) +
+  geom_text() +
+  ylab("Query") +
+  xlab("Replication") + 
+  theme(legend.position = "none")
+ggsave("results/figures/qtl_lead_variant_sharing.pdf", plot = qtl_replic_plot, width = 3, height = 2.5)
+
+
 
 #Perform the same analysis for promoter vs UTR vs contained / Leafcutter
-
 promoter_qtls = purrr::map_df(qtls$txrevise_promoters, identity, .id = "condition") %>% 
   dplyr::filter(condition == "naive") %>%
   dplyr::transmute(phenotype_id, snp_id, condition, p_fdr) %>%
@@ -140,4 +170,26 @@ leafcutter_vs_ends = comparePairwise(method_list)
 #Leafcutter vs Middle 
 method_list = list(leafcutter = leafcutter_qtls, txrevise_contained = middle_qtls)
 leafcutter_vs_middle = comparePairwise(method_list)
+
+event_df = dplyr::bind_rows(leafcutter_vs_promoters,leafcutter_vs_ends,leafcutter_vs_middle) %>%
+  dplyr::filter(m2 == "leafcutter")
+
+#Rename stuff
+event_rename_df = dplyr::left_join(event_df, phenotypeFriendlyNames(), by = c("m1" = "quant")) %>%
+  dplyr::rename(p1 = phenotype) %>%
+  dplyr::left_join(phenotypeFriendlyNames(), by = c("m2" = "quant")) %>%
+  dplyr::rename(p2 = phenotype)
+
+event_replic_plot = ggplot(event_rename_df, aes(x = p2, y = p1, fill = replication, label = round(replication,2))) + geom_tile() +
+  scale_fill_gradient2(space = "Lab", low = "#4575B4", mid = "#FFFFBF", high = "#E24C36", midpoint = 0, limits = c(0,1)) +
+  theme_light() +
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) +
+  geom_text() +
+  ylab("Query") +
+  xlab("Replication") + 
+  theme(legend.position = "none")
+ggsave("results/figures/qtl_position_lead_variant_sharing.pdf", plot = event_replic_plot, width = 1.75, height = 2.5)
+
+
 

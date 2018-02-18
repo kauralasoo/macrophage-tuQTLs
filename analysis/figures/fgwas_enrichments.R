@@ -15,6 +15,20 @@ df = data_frame(file_path = file_list[grep("params", file_list)]) %>%
   dplyr::select(-empty) %>%
   dplyr::mutate(full_path = file.path("processed/salmonella/fgwas/output", file_path))
 
+#Make friendly names for the fgwas parameters
+friendly_parameters = data_frame(
+  parameter = c("promoter_ln",
+                "fiveUTR_ln",
+                "CDS_ln",
+                "intron_ln",
+                "threeUTR_ln",
+                "polyA_site_ln",
+                "atac_peak_ln",
+                "eCLIP_splicing_ln"),
+  parameter_name = factor(c("promoter","5' UTR", "coding", "intron","3' UTR", "poly(A)", "open\n chromatin", "splicing\n factor"),
+                levels = c("promoter","5' UTR", "coding", "intron","3' UTR", "poly(A)", "open\n chromatin", "splicing\n factor")))
+
+
 # Import files
 file_paths = setNames(df$full_path, df$file_path)
 all_data = purrr::map_df(file_paths, ~readr::read_delim(., delim = " ", col_types = "cddd"), .id = "file_path") %>%
@@ -22,35 +36,38 @@ all_data = purrr::map_df(file_paths, ~readr::read_delim(., delim = " ", col_type
   dplyr::left_join(df, by = "file_path") %>%
   left_join(conditionFriendlyNames()) %>%
   left_join(phenotypeFriendlyNames()) %>%
-  dplyr::filter(parameter %in% c("eCLIP_both_ln","eCLIP_3end_ln"))
-
+  dplyr::filter(!(parameter %in% c("eCLIP_both_ln","eCLIP_3end_ln"))) %>%
+  dplyr::left_join(friendly_parameters)
 
 ### Compare different quant methods
 data = dplyr::filter(all_data, figure_name == "I", !is.na(phenotype)) %>%
-  dplyr::filter(!(parameter %in% c("eCLIP_both_ln","eCLIP_3end_ln")))
+  dplyr::filter(quant %in% c("Ensembl_87", "featureCounts","leafcutter","reviseAnnotations"))
 
 methods_plot = ggplot(data, aes(x = estimate, y = phenotype, xmin = CI_lo, xmax = CI_hi)) + 
-  geom_point() + facet_grid(parameter~.) +
+  geom_point() + facet_grid(parameter_name~.) +
   geom_errorbarh(aes(height = 0)) +
   theme_light() +
-  xlab("Log2(enrichment)") +
+  theme(axis.title.y = element_blank()) +
+  xlab("Log(enrichment)") +
   theme(strip.text.y = element_text(angle = 0)) + 
-  coord_cartesian(xlim = c(-.5,3.9))
+  coord_cartesian(xlim = c(-.2,3.9)) +
+  theme(panel.spacing = unit(0.1, "lines"))
 
-ggsave("results/figures/fgwas_methods.pdf", plot = methods_plot, width = 5, height = 5)
+ggsave("results/figures/fgwas_methods.pdf", plot = methods_plot, width = 3.2, height = 4)
 
 
 #Compare different positioms
 data = dplyr::filter(all_data, figure_name == "I", quant %in% 
-                       c("txrevise_contained","txrevise_ends","txrevise_promoters","leafcutter")) %>%
-  dplyr::filter(!(parameter %in% c("eCLIP_both_ln","eCLIP_3end_ln")))
+                       c("txrevise_contained","txrevise_ends","txrevise_promoters","leafcutter"))
 
-methods_plot = ggplot(data, aes(x = estimate, y = quant, xmin = CI_lo, xmax = CI_hi)) + 
-  geom_point() + facet_grid(parameter~.) +
+methods_plot = ggplot(data, aes(x = estimate, y = phenotype, xmin = CI_lo, xmax = CI_hi)) + 
+  geom_point() + facet_grid(parameter_name~.) +
   geom_errorbarh(aes(height = 0)) +
   theme_light() +
-  xlab("Log2(enrichment)") +
+  theme(axis.title.y = element_blank()) +
+  xlab("Log(enrichment)") +
   theme(strip.text.y = element_text(angle = 0)) + 
-  coord_cartesian(xlim = c(-.5,3.9))
-ggsave("results/figures/fgwas_position.pdf", plot = methods_plot, width = 5, height = 5)
+  coord_cartesian(xlim = c(-.2,3.9)) +
+  theme(panel.spacing = unit(0.1, "lines"))
+ggsave("results/figures/fgwas_position.pdf", plot = methods_plot, width = 3.2, height = 4)
 

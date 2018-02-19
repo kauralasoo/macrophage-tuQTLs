@@ -36,6 +36,6 @@ qtl_count_plot = ggplot(qtl_counts, aes(x = phenotype, y = qtl_count, group = fi
   scale_color_manual(name = "condition", values = c("#636363","#67a9cf","#2166ac","#ef8a62","#bdbdbd","#b2182b")) +
   scale_linetype_manual(name = "condition", values = c("dotted", "solid", "solid", "solid","dotted", "solid")) +
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1), axis.title.x = element_blank()) +
-  ylab("Number of significant QTLs (FDR < 0.1)")
+  ylab("Number of QTLs (FDR < 0.1)")
 
-ggsave("results/figures/qtl_count_plot.pdf", plot = qtl_count_plot, width = 3.5, height = 4)
+ggsave("results/figures/qtl_count_plot.pdf", plot = qtl_count_plot, width = 3.2, height = 2.8)

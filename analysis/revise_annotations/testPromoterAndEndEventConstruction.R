@@ -2,6 +2,7 @@ library("devtools")
 library("dplyr")
 library("data.table")
 library("SummarizedExperiment")
+library("ggplot2")
 load_all("../txrevise/")
 load_all("../seqUtils/")
 library("wiggleplotr")
@@ -14,7 +15,25 @@ revised_gene_metadata = readRDS("results/SummarizedExperiments/salmonella_salmon
   rowData(.) %>% tbl_df2()
 group_map = dplyr::select(revised_gene_metadata, transcript_id, group_id)
 
+
+#Make plots for IRF2 transcripts before and after filling in alt exons
+#IRF2
+promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "IRF2") %>% 
+  dplyr::filter(group_id %like% "upstream") %>% 
+  dplyr::filter(group_id %like% "grp_1")
+
+transcripts = revised_granges[promoter_events$transcript_id]
+original_promoters = plotTranscripts(transcripts)
+ggsave("results/figures/IRF2_original_promoters.pdf", plot = original_promoters, width = 5, height = 4)
+
+new_transcripts = fillMissingInternalExons(transcripts, type = "start")
+new_promoters = plotTranscripts(new_transcripts)
+ggsave("results/figures/IRF2_new_promoters.pdf", plot = new_promoters, width = 5, height = 3)
+
+
 ##### Tests cases for new promoter code ####
+
+#IRF5
 #Identify all promoter events
 promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "IRF5") %>% 
   dplyr::filter(group_id %like% "upstream") %>% 
@@ -23,7 +42,7 @@ promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "IRF5") %>%
 transcripts = revised_granges[promoter_events$transcript_id]
 plotTranscripts(transcripts)
 
-new_transcripts = fillMissingInternalExons(transcripts)
+new_transcripts = fillMissingInternalExons(transcripts, type = "start")
 plotTranscripts(new_transcripts)
 
 #KIAA1671
@@ -34,7 +53,7 @@ promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "KIAA1671") 
 transcripts = revised_granges[promoter_events$transcript_id]
 plotTranscripts(transcripts)
 
-new_transcripts = fillMissingInternalExons(transcripts)
+new_transcripts = fillMissingInternalExons(transcripts, type = "start")
 plotTranscripts(new_transcripts)
 
 #IRF2
@@ -45,7 +64,7 @@ promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "IRF2") %>%
 transcripts = revised_granges[promoter_events$transcript_id]
 plotTranscripts(transcripts)
 
-new_transcripts = fillMissingInternalExons(transcripts)
+new_transcripts = fillMissingInternalExons(transcripts, type = "start")
 plotTranscripts(new_transcripts)
 
 
@@ -57,7 +76,7 @@ promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "CD40") %>%
 transcripts = revised_granges[promoter_events$transcript_id]
 plotTranscripts(transcripts)
 
-new_transcripts = fillMissingInternalExons(transcripts)
+new_transcripts = fillMissingInternalExons(transcripts, type = "start")
 plotTranscripts(new_transcripts)
 
 #SLC9B2
@@ -68,7 +87,7 @@ promoter_events = dplyr::filter(revised_gene_metadata, gene_name == "SLC9B2") %>
 transcripts = revised_granges[promoter_events$transcript_id]
 plotTranscripts(transcripts)
 
-new_transcripts = fillMissingInternalExons(transcripts)
+new_transcripts = fillMissingInternalExons(transcripts, type = "start")
 plotTranscripts(new_transcripts)
 
 

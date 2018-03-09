@@ -1,6 +1,6 @@
 rule make_all:
 	input:
-		expand("processed/{study}/fgwas/min_pvalues/{annot_type}/{condition}.min_pvalues.txt.gz", annot_type = config["fgwas_phenotypes"], condition = config["conditions"]),
+		expand("processed/{{study}}/fgwas/min_pvalues/{annot_type}/{condition}.min_pvalues.txt.gz", annot_type = config["fgwas_phenotypes"], condition = config["conditions"]),
 	output:
 		"processed/{study}/out.txt"
 	resources:

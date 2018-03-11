@@ -39,6 +39,11 @@ txrevise_promoters = list(
   IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_promoters/IFNg.permuted.txt.gz"),
   SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_promoters/SL1344.permuted.txt.gz"),
   IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_promoters/IFNg_SL1344.permuted.txt.gz"))
+txrevise_contained = list(
+  naive = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_contained/naive.permuted.txt.gz"),
+  IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_contained/IFNg.permuted.txt.gz"),
+  SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_contained/SL1344.permuted.txt.gz"),
+  IFNg_SL1344 = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_contained/IFNg_SL1344.permuted.txt.gz"))
 txrevise_ends = list(
   naive = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_ends/naive.permuted.txt.gz"),
   IFNg = importQTLtoolsTable("processed/salmonella/qtltools/output/txrevise_ends/IFNg.permuted.txt.gz"),
@@ -47,39 +52,10 @@ txrevise_ends = list(
 
 #Put all results into a list
 trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, leafcutter = leafcutter_pvalues, tpm = tpm_pvalues,
-                             featureCounts = featureCounts_pvalues, reviseAnnotations_groupwise = revised_groupwise, txrevise_promoters = txrevise_promoters,
+                             featureCounts = featureCounts_pvalues, reviseAnnotations_groupwise = revised_groupwise, txrevise_promoters = txrevise_promoters, 
+                             txrevise_contained = txrevise_contained,
                              txrevise_ends = txrevise_ends)
 saveRDS(trQTL_min_pvalue_list, "results/trQTLs/salmonella_trQTL_min_pvalues.rds")
-
-
-#Make qq-plots
-qq_df = dplyr::mutate(ensembl_pvalues$naive, p_eigen = p_beta) %>% dplyr::arrange(p_eigen) %>% addExpectedPvalue()
-ggplot(qq_df, aes(x = -log(p_expected,10), y = -log(p_eigen,10))) + 
-  geom_point() +
-  geom_abline(slope = 1, intercept = 0, color = "black") + 
-  theme_light() + 
-  xlab("-log10 exptected p-value") + 
-  ylab("-log10 observed p-value")
-
-
-#Explore filtering
-se_revised = readRDS("results/SummarizedExperiments/salmonella_salmon_reviseAnnotations.rds")
-metadata = tbl_df2(rowData(se_revised)) %>%
-  dplyr::transmute(phenotype_id = transcript_id, gene_name)
-sample_data = tbl_df2(colData(se_revised))
-tpm_ratios = assays(se_revised)$tpm_ratios
-
-unfiltered_qtls = purrr::map_df(trQTL_min_pvalue_list$reviseAnnotations, identity, .id = "condition_name") %>%
-  dplyr::left_join(metadata, by = "phenotype_id") %>% 
-  dplyr::filter(p_fdr < 0.1)
-filtered_qtls = purrr::map_df(trQTL_min_pvalue_list$reviseAnnotations_filtered, identity, .id = "condition_name") %>%
-  dplyr::left_join(metadata, by = "phenotype_id") %>% 
-  dplyr::filter(p_fdr < 0.1)
-
-dplyr::filter(filtered_qtls, gene_name == "TNFRSF14")$phenotype_id
-dplyr::filter(unfiltered_qtls, gene_name == "TNFRSF14")$phenotype_id
-hist(tpm_ratios["ENSG00000134824.grp_2.contained.ENST00000257261",
-                dplyr::filter(sample_data, condition_name == "IFNg")$sample_id])
 
 
 

@@ -14,7 +14,7 @@ qtltools_columns = c("phenotype_id","pheno_chr","pheno_start", "pheno_end",
                      "snp_start", "snp_end", "p_nominal","beta", "is_lead")
 qtl_list = purrr::map(method_list, ~readr::read_delim(paste0(min_pvals, .,"/naive.min_pvalues.txt.gz"), 
                                                       delim = "\t", col_names = qtltools_columns) %>% 
-                        dplyr::filter(p_nominal < 1e-5))
+                        dplyr::filter(p_nominal < 1e-4))
 
 #Makr QTL SNPs
 qtl_snps = purrr::map(qtl_list, ~dplyr::select(., snp_id) %>% 

@@ -69,3 +69,12 @@ all_diff_df = dplyr::mutate(all_differences, diff_count = rowSums(sign(all_diffe
 
 #Estimate fraction
 table(all_diff_df$diff_count)/sum(table(all_diff_df$diff_count))
+
+
+#Estimate the number of genes with multiple QTLs
+multi_qtl_count = dplyr::filter(salmonella_qtls$reviseAnnotations$naive, p_fdr < 0.1) %>% 
+  dplyr::select(group_id) %>% tidyr::separate(group_id, c("gene_id", "suffix"), sep = "\\.") %>% 
+  dplyr::group_by(gene_id) %>% 
+  dplyr::summarise(qtl_count = length(gene_id))
+table(multi_qtl_count$qtl_count)/sum(table(multi_qtl_count$qtl_count))
+

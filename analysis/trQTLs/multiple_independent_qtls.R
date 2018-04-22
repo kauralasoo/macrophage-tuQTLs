@@ -3,6 +3,7 @@ library("devtools")
 library("ggplot2")
 library("SummarizedExperiment")
 load_all("../seqUtils/")
+load_all("analysis/housekeeping/")
 
 #Functions
 countMultigeneQTLs <- function(pvalues_df, gene_name_map, fdr_threshold = 0.1, R2_threshold = 0.8){
@@ -110,7 +111,8 @@ revised_counts_02 = countIndependentQTLs(salmonella_qtls$reviseAnnotations[1:4],
 revised_counts_08 = countIndependentQTLs(salmonella_qtls$reviseAnnotations[1:4], revised_names,
                                       fdr_threshold = 0.1, R2_threshold = 0.8) %>%
   dplyr::mutate(R2 = 0.8)
-revised_counts = dplyr::bind_rows(revised_counts_02,revised_counts_08) %>% 
+revised_counts_00 = dplyr::mutate(revised_counts_02, percent_all = multi_gene_count/total_gene_count, R2 = NA)
+revised_counts = dplyr::bind_rows(revised_counts_00, revised_counts_02,revised_counts_08) %>% 
   dplyr::mutate(quant = "reviseAnnotations")
 write.table(revised_counts, "results/figures/tables/revised_independent_qtls.txt", 
             sep = "\t", quote = FALSE, row.names = FALSE)
@@ -122,7 +124,9 @@ leafcutter_counts_02 = countIndependentQTLs(salmonella_qtls$leafcutter[1:4], lea
 leafcutter_counts_08 = countIndependentQTLs(salmonella_qtls$leafcutter[1:4], leafcutter_names,
                                          fdr_threshold = 0.1, R2_threshold = 0.8) %>%
   dplyr::mutate(R2 = 0.8)
-leafcutter_counts = dplyr::bind_rows(leafcutter_counts_02,leafcutter_counts_08) %>%
+leafcutter_counts_00 = dplyr::mutate(leafcutter_counts_02, percent_all = multi_gene_count/total_gene_count, R2 = NA)
+
+leafcutter_counts = dplyr::bind_rows(leafcutter_counts_00,leafcutter_counts_02,leafcutter_counts_08) %>%
   dplyr::mutate(quant = "leafcutter")
 write.table(leafcutter_counts, "results/figures/tables/leafcutter_independent_qtls.txt", 
             sep = "\t", quote = FALSE, row.names = FALSE)
@@ -130,15 +134,18 @@ write.table(leafcutter_counts, "results/figures/tables/leafcutter_independent_qt
 #Make a plot of multiple QTLs per gene
 multiple_qtls = dplyr::bind_rows(revised_counts, leafcutter_counts) %>% 
   dplyr::left_join(phenotypeFriendlyNames()) %>%
-  dplyr::mutate(R2 = as.factor(R2))
+  dplyr::mutate(R2 = as.character(R2)) %>%
+  dplyr::mutate(R2 = ifelse(is.na(R2), "None", R2)) %>%
+  dplyr::mutate(R2 = factor(R2, levels = c("None", "0.8", "0.2")))
 
-multiple_qtl_fraction = ggplot(multiple_qtls, aes(x = R2, y = percent_all, color = phenotype)) + 
+multiple_qtl_fraction = ggplot(multiple_qtls, aes(x = R2, y = percent_all)) +
+  facet_wrap(~phenotype) +
   geom_boxplot() + 
   theme_light() + 
-  coord_cartesian(ylim=c(0, 0.15)) +
-  ylab("Fraction of genes with multiple trQTLs") +
-  xlab("R2 threshold")
-ggsave("results/figures/multiple_trQTL_fraction.pdf", plot = multiple_qtl_fraction, width = 3, height = 3)
+  coord_cartesian(ylim=c(0, 0.30)) +
+  ylab("Fraction of genes with multiple tuQTLs") +
+  xlab(expression(paste(R^2, " threshold", sep = ""))) 
+ggsave("results/figures/multiple_tuQTL_fraction.pdf", plot = multiple_qtl_fraction, width = 4, height = 3)
 
 
 ##### Count QTLs that have multiple target genes ####

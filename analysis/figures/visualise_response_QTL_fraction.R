@@ -26,12 +26,12 @@ acldl_fraction = dplyr::group_by(acldl_df, quant, condition) %>%
 
 fraction_df = dplyr::bind_rows(salmonella_fraction, acldl_fraction) %>%
   dplyr::rename(condition_name = condition) %>%
-  dplyr::filter(quant != "txrevise_promoters") %>%
   dplyr::left_join(conditionFriendlyNames()) %>%
   dplyr::left_join(phenotypeFriendlyNames())
 
-#Make a line plot
-response_fraction_plot = ggplot(fraction_df, aes(x = phenotype, y = interaction_percent, color = figure_name, group = figure_name)) + 
+#Make a line plot for methods
+methods_df = dplyr::filter(fraction_df, quant %in% c("Ensembl_87", "featureCounts", "leafcutter", "reviseAnnotations"))
+response_fraction_plot = ggplot(methods_df, aes(x = phenotype, y = interaction_percent, color = figure_name, group = figure_name)) + 
   geom_point() + geom_line() +
   scale_color_manual(name = "condition", values = conditionPalette()) +
   theme_light() +
@@ -39,4 +39,18 @@ response_fraction_plot = ggplot(fraction_df, aes(x = phenotype, y = interaction_
   theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1), axis.title.x = element_blank())
 ggsave("results/figures/response_fraction_plot.pdf", plot = response_fraction_plot, width = 3.5, height = 2.5)
 
-  
+
+#Import DE counts
+de_counts = readRDS("results/DE/de_counts.rds")
+de_df = data_frame(condition_name = names(de_counts), de_count = unlist(de_counts))
+joint_df = dplyr::left_join(methods_df, de_df, by = "condition_name")
+
+de_scatter = ggplot(joint_df, aes(x = de_count, y = interaction_count, color = phenotype, 
+                     group = phenotype, label = figure_name)) + 
+  geom_point() + 
+  geom_line() +
+  geom_text_repel() + 
+  theme_light() +
+  xlab("Number of DE genes") +
+  ylab("Number of response QTLs")
+ggsave("results/figures/qtl_count_vs_DE.pdf", plot = de_scatter, width = 5, height = 4)

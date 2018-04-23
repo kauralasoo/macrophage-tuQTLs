@@ -40,7 +40,7 @@ GRCh37_information = importVariantInformation("results/genotypes/salmonella/GRCh
 selected_phenotype_id = "ENSG00000101017.grp_1.upstream.ENST00000372285"
 selected_snp_id = "rs4239702"
 
-#Make a QTL boxplot (relative expression)
+#Make a QTL boxplot (relative expression) of the long promoter
 plot_data = constructQtlPlotDataFrame(selected_phenotype_id, selected_snp_id, 
                                       ratio_matrix, vcf_file$genotypes, sample_meta, gene_meta) %>% 
   dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
@@ -49,8 +49,23 @@ plot_data = constructQtlPlotDataFrame(selected_phenotype_id, selected_snp_id,
   dplyr::filter(condition_name %in% c("N","I"))
 
 boxplot = plotQtlCol(plot_data) +
-  ylab("txrevise: 372285")
+  ylab("txrevise: ENST00000372285 usage")
+
+#Short promoter
+selected_phenotype_id2 = "ENSG00000101017.grp_1.upstream.ENST00000372276"
+selected_snp_id = "rs4239702"
+plot_data = constructQtlPlotDataFrame(selected_phenotype_id2, selected_snp_id, 
+                                      ratio_matrix, vcf_file$genotypes, sample_meta, gene_meta) %>% 
+  dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::mutate(condition_name = figure_name) %>%
+  dplyr::filter(condition_name %in% c("N","I"))
+
+boxplot = plotQtlCol(plot_data) +
+  ylab("txrevise: ENST00000372276 usage")
 ggsave("results/figures/CD40_promoter_relative_expression.pdf", boxplot, width = 1.75, height = 2.5)
+
+
 
 
 #Make a QTL boxplot (absolute expression)

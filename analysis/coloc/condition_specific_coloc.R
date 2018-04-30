@@ -34,8 +34,14 @@ filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.5, TRUE, FALSE)) %>%
   dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
+#Quantify coloc sharing between different phenotypes
+filtered_colocs_txrevise = dplyr::filter(filtered_colocs, quant != "reviseAnnotations") #Remove the original revise annotations
+txrevise_combined = dplyr::filter(filtered_colocs, quant %in% c("txrevise_promoters", "txrevise_ends", "txrevise_contained")) %>%
+  dplyr::mutate(quant = "reviseAnnotations")
+filtered_colocs_txrevise = dplyr::bind_rows(filtered_colocs_txrevise, txrevise_combined)
+
 #Identify response colocs
-response_coloc_hits = dplyr::filter(filtered_colocs, is_response)
+response_coloc_hits = dplyr::filter(filtered_colocs_txrevise, is_response)
 
 #### AcLDL ####
 #Import coloc overlaps
@@ -64,14 +70,21 @@ acldl_filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::mutate(is_response = ifelse(p_fdr < 0.1 & interaction_fraction > 0.5, TRUE, FALSE)) %>%
   dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
-acldl_response_coloc_hits = dplyr::filter(acldl_filtered_colocs, is_response)
+#Quantify coloc sharing between different phenotypes
+acldl_filtered_colocs_txrevise = dplyr::filter(acldl_filtered_colocs, quant != "reviseAnnotations") #Remove the original revise annotations
+txrevise_combined = dplyr::filter(acldl_filtered_colocs, quant %in% c("txrevise_promoters", "txrevise_ends", "txrevise_contained")) %>%
+  dplyr::mutate(quant = "reviseAnnotations")
+acldl_filtered_colocs_txrevise = dplyr::bind_rows(acldl_filtered_colocs, txrevise_combined)
+
+
+acldl_response_coloc_hits = dplyr::filter(acldl_filtered_colocs_txrevise, is_response)
 
 #Extract summarized traits
 summarised_traits = dplyr::bind_rows(coloc_df, acldl_coloc_df) %>%
   dplyr::select(trait, summarised_trait) %>% dplyr::distinct()
 
 #Estimate the fraction of colocs that are condition specific
-cond_specific_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) %>%
+cond_specific_colocs = dplyr::bind_rows(filtered_colocs_txrevise, acldl_filtered_colocs_txrevise) %>%
   dplyr::left_join(summarised_traits) %>%
   dplyr::group_by(quant, summarised_trait, gene_name) %>%
   dplyr::mutate(has_response = as.logical(max(is_response))) %>%
@@ -94,7 +107,7 @@ write.table(cond_fraction, "results/tables/coloc_response_fraction.txt", sep = "
 coloc_response_plot = dplyr::filter(cond_fraction, quant %in% c("Ensembl_87","featureCounts","leafcutter","reviseAnnotations")) %>%
   ggplot(aes(x = phenotype, y = response_fraction)) + 
   geom_bar(stat = "identity") + 
-  coord_flip(ylim = c(0,0.3)) +
+  coord_flip(ylim = c(0,0.2)) +
   theme_light() +
   xlab("") +
   ylab("Fraction of colocalisations \n that are response QTLs")
@@ -113,7 +126,7 @@ ggsave("results/figures/coloc_splicing_response_fraction.pdf",coloc_response_plo
 
 
 #Quantify coloc sharing between different phenotypes
-all_colocs = dplyr::bind_rows(filtered_colocs, acldl_filtered_colocs) %>%
+all_colocs = dplyr::bind_rows(filtered_colocs_txrevise, acldl_filtered_colocs_txrevise) %>%
   dplyr::left_join(summarised_traits) %>%
   dplyr::left_join(phenotypeFriendlyNames())
 
@@ -136,14 +149,14 @@ overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
   as.data.frame()
 
 #Comapre different quantification methods
-pdf("results/figures/coloc_GWAS_overlap_UpSetR.pdf", width = 4.5, height = 3.5, onefile = FALSE)
+pdf("results/figures/coloc_GWAS_overlap_UpSetR.pdf", width = 3.5, height = 3, onefile = FALSE)
 upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript usage", "Leafcutter", "txrevise")), 
       order.by = "freq", keep.order = TRUE)
 dev.off()
 
 #Comapre only splicing methods
-pdf("results/figures/coloc_GWAS_splicing_overlap_UpSetR.pdf", width = 4.5, height = 3.5, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("Leafcutter", "promoters", "middle exons", "3' ends")), 
+pdf("results/figures/coloc_GWAS_splicing_overlap_UpSetR.pdf", width = 3.5, height = 3, onefile = FALSE)
+upset(as.data.frame(overlap_counts), sets = rev(c("Leafcutter", "promoters", "internal exons", "3' ends")), 
       order.by = "freq", keep.order = TRUE)
 dev.off()
 

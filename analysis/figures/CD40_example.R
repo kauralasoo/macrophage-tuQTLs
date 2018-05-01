@@ -200,4 +200,19 @@ coverage_plot = plotCoverage(exons = first_exons,
 ggsave("results/figures/CD40_coverage_zoomed.pdf", coverage_plot, width = 3, height = 3)
 
 
+#Visualize internal exons
+CD40_contained = dplyr::filter(gene_meta, transcript_id %like% "ENSG00000101017.grp_1.contained")[1:2,]
+
+selected_phenotype_id2 = "ENSG00000101017.grp_1.contained.ENST00000372276"
+selected_snp_id = "rs4239702"
+plot_data = constructQtlPlotDataFrame(selected_phenotype_id2, selected_snp_id, 
+                                      ratio_matrix, vcf_file$genotypes, sample_meta, gene_meta) %>% 
+  dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::mutate(condition_name = figure_name) %>%
+  dplyr::filter(condition_name %in% c("N","I"))
+
+boxplot = plotQtlCol(plot_data) +
+  ylab("Rate of CD40 exon 6 skipping")
+ggsave("results/figures/CD40_exon_6_skipping.pdf", boxplot, width = 2.5, height = 3.5)
 

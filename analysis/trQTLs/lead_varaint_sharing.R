@@ -71,7 +71,9 @@ leafcutter_qtls = purrr::map_df(qtls$leafcutter, identity, .id = "condition") %>
   dplyr::transmute(phenotype_id, snp_id, condition, p_fdr) %>%
   dplyr::left_join(leafcutter_gene_names)
 
-txrevise_qtls = purrr::map_df(qtls$reviseAnnotations, identity, .id = "condition") %>% 
+txrevise_qtls = dplyr::bind_rows(purrr::map_df(qtls$txrevise_promoters, identity, .id = "condition"),
+                                 purrr::map_df(qtls$txrevise_contained, identity, .id = "condition"),
+                                 purrr::map_df(qtls$txrevise_ends, identity, .id = "condition")) %>% 
   dplyr::filter(condition == "naive") %>%
   dplyr::transmute(phenotype_id, snp_id, condition, p_fdr) %>%
   dplyr::left_join(revised_gene_names)
@@ -189,7 +191,7 @@ event_replic_plot = ggplot(event_rename_df, aes(x = p2, y = p1, fill = replicati
   ylab("Query") +
   xlab("Replication") + 
   theme(legend.position = "none")
-ggsave("results/figures/qtl_position_lead_variant_sharing.pdf", plot = event_replic_plot, width = 1.75, height = 2.5)
+ggsave("results/figures/qtl_position_lead_variant_sharing.pdf", plot = event_replic_plot, width = 1.85, height = 2.5)
 
 
 

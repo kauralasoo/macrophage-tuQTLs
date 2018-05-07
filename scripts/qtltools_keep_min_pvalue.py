@@ -58,7 +58,7 @@ for line in qtltools_file:
         last_line = line
 
 #Print the last line that was not printed yet
-print(list_line)
+print(last_line)
 
 
 

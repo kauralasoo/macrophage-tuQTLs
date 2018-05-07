@@ -2,7 +2,7 @@ shell.prefix("set +o pipefail; ")
 
 rule make_all:
 	input:
-		expand("processed/{{study}}/fgwas/output/{annot_type}/{condition}.params", annot_type = config["fgwas_phenotypes"], condition = config["conditions"]),
+		expand("processed/{{study}}/fgwas/output/{model}/{annot_type}/{condition}.params", annot_type = config["fgwas_phenotypes"], condition = config["conditions"], model = config["fgwas_model"]),
 	output:
 		"processed/{study}/out.txt"
 	resources:
@@ -44,9 +44,9 @@ rule run_fgwas:
 	input:
 		"processed/{study}/fgwas/input/{annot_type}/{condition}.fgwas_input.sorted.txt.gz"
 	output:
-		"processed/{study}/fgwas/output/{annot_type}/{condition}.params"
+		"processed/{study}/fgwas/output/{model}/{annot_type}/{condition}.params"
 	params:
-		out_prefix = "processed/{study}/fgwas/output/{annot_type}/{condition}"
+		out_prefix = "processed/{study}/fgwas/output/{model}/{annot_type}/{condition}"
 	resources:
 		mem = 36000
 	threads: 1

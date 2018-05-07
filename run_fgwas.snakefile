@@ -53,5 +53,5 @@ rule run_fgwas:
 	shell:
 		"""
 		module load gsl-1.16
-		fgwas -i {input} -fine -o {params.out_prefix} -w {config[fgwas_model]}
+		fgwas -i {input} -fine -o {params.out_prefix} -w {wildcards.model}
 		"""

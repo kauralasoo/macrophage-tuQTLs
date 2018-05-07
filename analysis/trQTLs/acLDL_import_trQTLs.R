@@ -22,6 +22,9 @@ featureCounts_pvalues = list(
 txrevise_promoters_pvalues = list(
   Ctrl = importQTLtoolsTable("processed/acLDL/qtltools/output/txrevise_promoters/Ctrl.permuted.txt.gz"),
   AcLDL = importQTLtoolsTable("processed/acLDL/qtltools/output/txrevise_promoters/AcLDL.permuted.txt.gz"))
+txrevise_contained_pvalues = list(
+  Ctrl = importQTLtoolsTable("processed/acLDL/qtltools/output/txrevise_contained/Ctrl.permuted.txt.gz"),
+  AcLDL = importQTLtoolsTable("processed/acLDL/qtltools/output/txrevise_contained/AcLDL.permuted.txt.gz"))
 txrevise_ends_pvalues = list(
   Ctrl = importQTLtoolsTable("processed/acLDL/qtltools/output/txrevise_ends/Ctrl.permuted.txt.gz"),
   AcLDL = importQTLtoolsTable("processed/acLDL/qtltools/output/txrevise_ends/AcLDL.permuted.txt.gz"))
@@ -30,6 +33,7 @@ txrevise_ends_pvalues = list(
 trQTL_min_pvalue_list = list(Ensembl_87 = ensembl_pvalues, reviseAnnotations = revised_pvalues, 
                              leafcutter = leafcutter_pvalues, tpm = tpm_pvalues,
                              featureCounts = featureCounts_pvalues, txrevise_promoters = txrevise_promoters_pvalues,
+                             txrevise_contained = txrevise_contained_pvalues,
                              txrevise_ends = txrevise_ends_pvalues)
 saveRDS(trQTL_min_pvalue_list, "results/trQTLs/acLDL_trQTL_min_pvalues.rds")
 

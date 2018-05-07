@@ -41,7 +41,7 @@ other_counts = txrevise_events %>%
 
 #Event names
 event_names = data_frame(position = c("upstream", "contained","downstream"), 
-                         event_type = factor(c("promoters", "middle exons", "3' ends"), levels = c("promoters", "middle exons", "3' ends")))
+                         event_type = factor(c("promoters", "internal exons", "3' ends"), levels = c("promoters", "internal exons", "3' ends")))
 
 count_df = other_counts %>%
   dplyr::rename(condition_name = condition) %>%
@@ -73,7 +73,7 @@ end_counts = end_events %>%
 
 combined_counts = dplyr::bind_rows(dplyr::filter(other_counts, position == "contained"), promoter_counts, end_counts)
 
-event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("promoters", "middle exons", "3' ends"), levels = c("promoters", "middle exons", "3' ends")))
+event_names = data_frame(position = c("upstream", "contained","downstream"), event_type = factor(c("promoters", "internal exons", "3' ends"), levels = c("promoters", "internal exons", "3' ends")))
 
 count_df = combined_counts %>%
   dplyr::rename(condition_name = condition) %>%

@@ -44,3 +44,7 @@ echo "test" | python ~/software/utils/submitJobs.py --MEM 12000 --jobname varExp
 
 #Run StringTie
 snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_StringTie.snakefile processed/salmonella/out.txt --jobs 100 --configfile configs/salmonella_trQTL_config.yaml
+
+
+#Run fgwas to perform diease enrichments
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_fgwas_disease.snakefile processed/salmonella/out.txt --jobs 30 --configfile configs/salmonella_trQTL_config.yaml

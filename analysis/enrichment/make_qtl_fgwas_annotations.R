@@ -23,7 +23,24 @@ is_qtl_df = dplyr::transmute(qtltools, snp_id, featureCounts = 1)
 new_annotations = dplyr::left_join(var_info, is_qtl_df, by = "snp_id") %>%
   dplyr::mutate(featureCounts = ifelse(is.na(featureCounts), 0, featureCounts))
 
+
+#Sort by chromosome and position
+sorted_annotations = dplyr::arrange(new_annotations, chr, pos)
+
+
+#Import GWAS summary stats
+ra_gwas = readr::read_delim("RA_fgwas_input.txt.gz", delim = " ", col_types = "cciidid")
+
+joint_annotations = dplyr::left_join(ra_gwas, sorted_annotations, by = c("CHR" = "chr", "POS" = "pos")) %>%
+  dplyr::filter(!is.na(MAF))
+
+filtered_annot = dplyr::select(joint_annotations, SNPID, CHR, POS, MAF, Z, N, SE, everything()) %>%
+  dplyr::select(-type, -snp_id, -F) %>%
+  dplyr::rename(F = MAF)
+
+keep_unique_pos = dplyr::group_by(filtered_annot, CHR, POS) %>% dplyr::filter(row_number() == 1) %>% dplyr::ungroup()
+
 #Save results
-gz1 <- gzfile("processed/annotations/fgwas/fgwas_qtl_annotations.txt.gz", "w")
-write.table(new_annotations, gz1, sep = "\t", quote = FALSE, row.names = FALSE)
+gz1 <- gzfile("RA_fgwas_annotated.txt.gz", "w")
+write.table(keep_unique_pos, gz1, sep = "\t", quote = FALSE, row.names = FALSE)
 close(gz1)

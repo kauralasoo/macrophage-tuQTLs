@@ -10,7 +10,6 @@ load_all("analysis/housekeeping/")
 
 #Import coloc overlaps
 salmonella_olaps = readRDS("results/coloc/salmonella_GWAS_coloc_hits.rds")
-salmonella_olaps$txrevise_contained = dplyr::filter(salmonella_olaps$reviseAnnotations, phenotype_id %like% "contained")
 coloc_df = purrr::map_df(salmonella_olaps, identity, .id = "quant")
 
 #Import QTL condition-specificity estimates
@@ -35,10 +34,9 @@ filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
 #Quantify coloc sharing between different phenotypes
-filtered_colocs_txrevise = dplyr::filter(filtered_colocs, quant != "reviseAnnotations") #Remove the original revise annotations
 txrevise_combined = dplyr::filter(filtered_colocs, quant %in% c("txrevise_promoters", "txrevise_ends", "txrevise_contained")) %>%
   dplyr::mutate(quant = "reviseAnnotations")
-filtered_colocs_txrevise = dplyr::bind_rows(filtered_colocs_txrevise, txrevise_combined)
+filtered_colocs_txrevise = dplyr::bind_rows(filtered_colocs, txrevise_combined)
 
 #Identify response colocs
 response_coloc_hits = dplyr::filter(filtered_colocs_txrevise, is_response)
@@ -46,7 +44,6 @@ response_coloc_hits = dplyr::filter(filtered_colocs_txrevise, is_response)
 #### AcLDL ####
 #Import coloc overlaps
 salmonella_olaps = readRDS("results/coloc/acLDL_GWAS_coloc_hits.rds")
-salmonella_olaps$txrevise_contained = dplyr::filter(salmonella_olaps$reviseAnnotations, phenotype_id %like% "contained")
 acldl_coloc_df = purrr::map_df(salmonella_olaps, identity, .id = "quant")
 
 #Import QTL condition-specificity estimates
@@ -71,7 +68,6 @@ acldl_filtered_colocs = dplyr::filter(response_colocs, !is.na(p_fdr)) %>%
   dplyr::mutate(is_response = ifelse(is.na(is_response), FALSE, is_response)) 
 
 #Quantify coloc sharing between different phenotypes
-acldl_filtered_colocs_txrevise = dplyr::filter(acldl_filtered_colocs, quant != "reviseAnnotations") #Remove the original revise annotations
 txrevise_combined = dplyr::filter(acldl_filtered_colocs, quant %in% c("txrevise_promoters", "txrevise_ends", "txrevise_contained")) %>%
   dplyr::mutate(quant = "reviseAnnotations")
 acldl_filtered_colocs_txrevise = dplyr::bind_rows(acldl_filtered_colocs, txrevise_combined)

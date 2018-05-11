@@ -4,6 +4,7 @@ library("purrr")
 library("UpSetR")
 library("devtools")
 library("ggplot2")
+library("data.table")
 library("SummarizedExperiment")
 load_all("../seqUtils/")
 load_all("~/software/rasqual/rasqualTools/")
@@ -13,7 +14,6 @@ load_all("analysis/housekeeping/")
 se_ensembl = readRDS("results/SummarizedExperiments/salmonella_salmon_Ensembl_87.rds")
 se_reviseAnnotations = readRDS("results/SummarizedExperiments/salmonella_salmon_reviseAnnotations.rds")
 se_leafcutter = readRDS("results/SummarizedExperiments/salmonella_leafcutter_counts.rds")
-se_tpm = readRDS("results/SummarizedExperiments/salmonella_salmon_gene_abundances.rds")
 se_featureCounts = readRDS("results/SummarizedExperiments/salmonella_featureCounts.rds")
 se_promoters = readRDS("results/SummarizedExperiments/salmonella_salmon_txrevise_promoters.rds")
 se_ends = readRDS("results/SummarizedExperiments/salmonella_salmon_txrevise_ends.rds")
@@ -26,8 +26,6 @@ mhc_revised = dplyr::filter(tbl_df2(rowData(se_reviseAnnotations)), chr == "6", 
   dplyr::rename(phenotype_id = transcript_id)
 mhc_leafcutter = dplyr::filter(tbl_df2(rowData(se_leafcutter)), chr == "6", start > 28510120, end < 33480577) %>%
   dplyr::rename(phenotype_id = transcript_id)
-mhc_tpm = dplyr::filter(tbl_df2(rowData(se_tpm)), chr == "6", start > 28510120, end < 33480577) %>%
-  dplyr::rename(phenotype_id = gene_id)
 mhc_featureCounts = dplyr::filter(tbl_df2(rowData(se_featureCounts)), chr == "6", start > 28510120, end < 33480577) %>%
   dplyr::rename(phenotype_id = gene_id)
 
@@ -38,8 +36,6 @@ revised_name_map = dplyr::select(tbl_df2(rowData(se_reviseAnnotations)), transcr
   dplyr::rename(phenotype_id = transcript_id)
 leafcutter_name_map = dplyr::select(tbl_df2(rowData(se_leafcutter)), transcript_id, gene_name) %>% 
   dplyr::rename(phenotype_id = transcript_id)
-tpm_name_map = dplyr::select(tbl_df2(rowData(se_tpm)), gene_id, gene_name) %>% 
-  dplyr::rename(phenotype_id = gene_id)
 featureCounts_name_map = dplyr::select(tbl_df2(rowData(se_featureCounts)), gene_id, gene_name) %>% 
   dplyr::rename(phenotype_id = gene_id)
 
@@ -58,12 +54,13 @@ ensembl_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".ensembl_8
   dplyr::select(-.row)
 
 #revisedAnnotations
-revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".reviseAnnotations.2e5.txt", 
+contained_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".reviseAnnotations.2e5.txt", 
                                               coloc_prefix = "processed/salmonella/coloc/",
                                               PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
                                               gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
   dplyr::left_join(revised_name_map, by = "phenotype_id") %>%
-  dplyr::select(-.row)
+  dplyr::select(-.row) %>%
+  dplyr::filter(phenotype_id %like% 'contained')
 
 #revisedAnnotations
 leafcutter_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".leafcutter.2e5.txt", 
@@ -74,14 +71,6 @@ leafcutter_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".leafcu
   dplyr::select(-.row)
 
 #featureCounts
-tpm_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".tpm.2e5.txt", 
-                                          coloc_prefix = "processed/salmonella/coloc/",
-                                          PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
-                                          gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_tpm) %>%
-  dplyr::left_join(tpm_name_map, by = "phenotype_id") %>%
-  #dplyr::anti_join(unconvincing_coloc, by = c("gene_name", "trait")) %>%
-  dplyr::select(-.row)
-
 featureCounts_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".featureCounts.2e5.txt", 
                                           coloc_prefix = "processed/salmonella/coloc/",
                                           PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
@@ -107,8 +96,9 @@ ends_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_end
   dplyr::select(-.row)
 
 #Put all GWAS overlaps into a single list
-gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, reviseAnnotations = revised_200kb_hits, 
-                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, 
+gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, 
+                  txrevise_contained = contained_200kb_hits, 
+                  leafcutter = leafcutter_200kb_hits, 
                   featureCounts = featureCounts_200kb_hits, 
                   txrevise_promoters = promoters_200kb_hits,
                   txrevise_ends = ends_200kb_hits)

@@ -13,7 +13,6 @@ load_all("analysis/housekeeping/")
 se_ensembl = readRDS("results/SummarizedExperiments/acLDL_salmon_Ensembl_87.rds")
 se_reviseAnnotations = readRDS("results/SummarizedExperiments/acLDL_salmon_reviseAnnotations.rds")
 se_leafcutter = readRDS("results/SummarizedExperiments/acLDL_leafcutter_counts.rds")
-se_tpm = readRDS("results/SummarizedExperiments/acLDL_salmon_gene_abundances.rds")
 se_featureCounts = readRDS("results/SummarizedExperiments/acLDL_featureCounts.rds")
 
 #Identify genes in the MHC region that should be excluded
@@ -23,8 +22,6 @@ mhc_revised = dplyr::filter(tbl_df2(rowData(se_reviseAnnotations)), chr == "6", 
   dplyr::rename(phenotype_id = transcript_id)
 mhc_leafcutter = dplyr::filter(tbl_df2(rowData(se_leafcutter)), chr == "6", start > 28510120, end < 33480577) %>%
   dplyr::rename(phenotype_id = transcript_id)
-mhc_tpm = dplyr::filter(tbl_df2(rowData(se_tpm)), chr == "6", start > 28510120, end < 33480577) %>%
-  dplyr::rename(phenotype_id = gene_id)
 mhc_featureCounts = dplyr::filter(tbl_df2(rowData(se_featureCounts)), chr == "6", start > 28510120, end < 33480577) %>%
   dplyr::rename(phenotype_id = gene_id)
 
@@ -35,8 +32,6 @@ revised_name_map = dplyr::select(tbl_df2(rowData(se_reviseAnnotations)), transcr
   dplyr::rename(phenotype_id = transcript_id)
 leafcutter_name_map = dplyr::select(tbl_df2(rowData(se_leafcutter)), transcript_id, gene_name) %>% 
   dplyr::rename(phenotype_id = transcript_id)
-tpm_name_map = dplyr::select(tbl_df2(rowData(se_tpm)), gene_id, gene_name) %>% 
-  dplyr::rename(phenotype_id = gene_id)
 featureCounts_name_map = dplyr::select(tbl_df2(rowData(se_featureCounts)), gene_id, gene_name) %>% 
   dplyr::rename(phenotype_id = gene_id)
 
@@ -55,12 +50,13 @@ ensembl_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".ensembl_8
   dplyr::select(-.row)
 
 #revisedAnnotations
-revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".reviseAnnotations.2e5.txt", 
+contained_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".reviseAnnotations.2e5.txt", 
                                   coloc_prefix = "processed/acLDL/coloc/", 
                                   PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
                                   gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
   dplyr::left_join(revised_name_map, by = "phenotype_id") %>%
-  dplyr::select(-.row)
+  dplyr::select(-.row) %>%
+  dplyr::filter(phenotype_id %like% 'contained')
 
 #leafcutter
 leafcutter_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".leafcutter.2e5.txt", 
@@ -68,14 +64,6 @@ leafcutter_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".leafcu
                                      PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
                                      gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_leafcutter) %>%
   dplyr::left_join(leafcutter_name_map, by = "phenotype_id") %>%
-  dplyr::select(-.row)
-
-#TPM
-tpm_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".tpm.2e5.txt", 
-                              coloc_prefix = "processed/acLDL/coloc/", 
-                              PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
-                              gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_tpm) %>%
-  dplyr::left_join(tpm_name_map, by = "phenotype_id") %>%
   dplyr::select(-.row)
 
 #featureCounts
@@ -87,7 +75,7 @@ featureCounts_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".fea
   dplyr::select(-.row)
 
 #txrevise promoters
-revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_promoters.2e5.txt", 
+promoters_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_promoters.2e5.txt", 
                                   coloc_prefix = "processed/acLDL/coloc/", 
                                   PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
                                   gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
@@ -95,7 +83,7 @@ revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_
   dplyr::select(-.row)
 
 #txrevise_ends
-revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_ends.2e5.txt", 
+ends_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_ends.2e5.txt", 
                                   coloc_prefix = "processed/acLDL/coloc/", 
                                   PP_power_thresh = 0.8, PP_coloc_thresh = .9, nsnps_thresh = 50, 
                                   gwas_pval_thresh = 1e-6, mhc_phenotypes = mhc_revised) %>%
@@ -103,8 +91,9 @@ revised_200kb_hits = importColocs(gwas_stats_labeled, coloc_suffix = ".txrevise_
   dplyr::select(-.row)
 
 #Put all GWAS overlaps into a single list
-gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, reviseAnnotations = revised_200kb_hits, 
-                  leafcutter = leafcutter_200kb_hits, tpm = tpm_200kb_hits, 
+gwas_olaps = list(Ensembl_87 = ensembl_200kb_hits, 
+                  txrevise_contained = contained_200kb_hits, 
+                  leafcutter = leafcutter_200kb_hits, 
                   featureCounts = featureCounts_200kb_hits, 
                   txrevise_promoters = promoters_200kb_hits,
                   txrevise_ends = ends_200kb_hits)

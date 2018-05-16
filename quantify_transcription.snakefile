@@ -34,7 +34,7 @@ rule star_align:
 		"--outFileNamePrefix {params.prefix} --readFilesIn {input.fq1} {input.fq2} "
 
 #Align reads to the reference genome using HISAT2
-rule star_align:
+rule hisat2_align:
 	input:
 		fq1 = "processed/{study}/fastq_sorted/{sample}.1.fastq.gz",
 		fq2 = "processed/{study}/fastq_sorted/{sample}.2.fastq.gz"

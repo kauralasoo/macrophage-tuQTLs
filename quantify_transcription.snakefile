@@ -47,7 +47,7 @@ rule hisat2_align:
 	shell:
 		"""
 		module load samtools-1.6
-		hisat2 -x {config[hisat2_index]} {config[hisat2_flags]} --known-splicesite-infile {config[hisat2_ss]} --novel-splicesite-outfile {output.ss} -1 {input.fq1} -2 {input.fq2} | samtools view -Sb > {output.bam}
+		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} --known-splicesite-infile {config[hisat2_ss]} --novel-splicesite-outfile {output.ss} -1 {input.fq1} -2 {input.fq2} | samtools view -Sb > {output.bam}
 		"""
 
 #Index sorted bams

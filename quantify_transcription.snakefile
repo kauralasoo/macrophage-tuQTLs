@@ -33,6 +33,23 @@ rule star_align:
 		"--readFilesCommand zcat --genomeDir {config[star_index]} --limitBAMsortRAM 32000000000 "
 		"--outFileNamePrefix {params.prefix} --readFilesIn {input.fq1} {input.fq2} "
 
+#Align reads to the reference genome using HISAT2
+rule star_align:
+	input:
+		fq1 = "processed/{study}/fastq_sorted/{sample}.1.fastq.gz",
+		fq2 = "processed/{study}/fastq_sorted/{sample}.2.fastq.gz"
+	output:
+		bam = "processed/{study}/hisat2/{sample}.bam",
+		ss = "processed/{study}/hisat2_ss/{sample}.splice_sites.txt"
+	resources:
+		mem = 8000
+	threads: 8
+	shell:
+		"""
+		module load samtools-1.6
+		hisat2 -x {config[hisat2_index]} {config[hisat2_flags]} --known-splicesite-infile {config[hisat2_ss]} --novel-splicesite-outfile {output.ss} -1 {input.fq1} -2 {input.fq2} | samtools view -Sb > {output.bam}
+		"""
+
 #Index sorted bams
 rule index_bams:
 	input:

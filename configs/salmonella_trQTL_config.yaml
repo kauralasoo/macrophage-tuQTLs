@@ -10,6 +10,11 @@ annotations: ["txrevise.grp_1_promoters","txrevise.grp_2_promoters","txrevise.gr
 study: salmonella
 libType: ISR
 
+#HISAT2 config
+hisat2_index: /gpfs/hpchome/a72094/rocket/annotations/GRCh38/hisat2_index/Homo_sapiens.GRCh38.dna.primary_assembly
+hisat2_ss: /gpfs/hpchome/a72094/rocket/annotations/GRCh38/Ensembl_90/Homo_sapiens.GRCh38.90.splice_sites.txt
+hisat2_flags: "--rna-strandness RF"
+
 #Quantification
 leafcutter_root: "/nfs/users/nfs_k/ka8/software/leafcutter"
 

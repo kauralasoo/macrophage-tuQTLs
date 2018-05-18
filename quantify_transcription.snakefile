@@ -1,3 +1,6 @@
+import uuid
+import os
+
 #Sort fastq files by name before alignment
 rule sort_fastq:
 	input:
@@ -41,13 +44,19 @@ rule hisat2_align:
 	output:
 		bam = "processed/{study}/hisat2/{sample}.bam",
 		ss = "processed/{study}/hisat2_ss/{sample}.splice_sites.txt"
+	params:
+		local_tmp = "/tmp/" + uuid.uuid4().hex + "/"
 	resources:
 		mem = 8000
 	threads: 8
 	shell:
 		"""
 		module load samtools-1.6
-		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} --known-splicesite-infile {config[hisat2_ss]} --novel-splicesite-outfile {output.ss} -1 {input.fq1} -2 {input.fq2} | samtools view -Sb > {output.bam}
+		cp {input[0]} {params.local_tmp}/{wildcards.sample}_1.fq.gz
+		cp {input[1]} {params.local_tmp}/{wildcards.sample}_2.fq.gz
+		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} --novel-splicesite-outfile {output.ss} -1 {params.local_tmp}/{wildcards.sample}_1.fq.gz -2 {params.local_tmp}/{wildcards.sample}_2.fq.gz | samtools view -Sb > {params.local_tmp}/{wildcards.sample}.bam
+		cp {params.local_tmp}/{wildcards.sample}.bam {output.bam}
+		rm -r {params.local_tmp}
 		"""
 
 #Index sorted bams

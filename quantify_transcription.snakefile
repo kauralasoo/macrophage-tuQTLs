@@ -45,7 +45,7 @@ rule hisat2_align:
 		bam = "processed/{study}/hisat2/{sample}.bam",
 		ss = "processed/{study}/hisat2_ss/{sample}.splice_sites.txt"
 	params:
-		local_tmp = "/tmp/" + uuid.uuid4().hex + "/"
+		local_tmp = "/tmp/a72094_" + uuid.uuid4().hex + "/"
 	resources:
 		mem = 8000
 	threads: 8
@@ -56,7 +56,8 @@ rule hisat2_align:
 		cp {input[0]} {params.local_tmp}/{wildcards.sample}_1.fq.gz
 		cp {input[1]} {params.local_tmp}/{wildcards.sample}_2.fq.gz
 		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} --novel-splicesite-outfile {output.ss} -1 {params.local_tmp}/{wildcards.sample}_1.fq.gz -2 {params.local_tmp}/{wildcards.sample}_2.fq.gz | samtools view -Sb > {params.local_tmp}/{wildcards.sample}.bam
-		cp {params.local_tmp}/{wildcards.sample}.bam {output.bam}
+		samtools sort -m 1000M -o {params.local_tmp}/{wildcards.sample}.sorted.bam -O BAM --threads 6 {params.local_tmp}/{wildcards.sample}.bam
+		cp {params.local_tmp}/{wildcards.sample}.sorted.bam {output.bam}
 		rm -r {params.local_tmp}
 		"""
 
@@ -255,10 +256,11 @@ rule make_all:
 	input:
 		#expand("processed/{study}/verifyBamID/{sample}.verifyBamID.bestSM", study = config["study"], sample=config["samples"]),
 		#expand("processed/{study}/bigwig/{sample}.str1.bw", study = config["study"], sample=config["samples"]),
+		expand("processed/{study}/hisat2/{sample}.bam", study = config["study"], sample=config["samples"]),
 		#expand("processed/{study}/salmon/{annotation}/{sample}/quant.sf", study = config["study"], annotation=config["annotations"], sample=config["samples"]),
 		#expand("processed/{study}/featureCounts/{sample}.featureCounts.txt", study = config["study"], sample=config["samples"]),
 		#expand("processed/{study}/ASEcounts/{sample}.ASEcounts", study = config["study"], sample=config["samples"]),
-		expand("processed/{study}/matrices/{annotation}.salmon_txrevise.rds", study = config["study"], annotation=config["annotations"]),
+		#expand("processed/{study}/matrices/{annotation}.salmon_txrevise.rds", study = config["study"], annotation=config["annotations"]),
 		#"processed/{study}/leafcutter/leafcutter_perind.counts.gz"
 	output:
 		"processed/{study}/out.txt"

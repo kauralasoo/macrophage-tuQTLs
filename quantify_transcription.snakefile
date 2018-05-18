@@ -52,6 +52,7 @@ rule hisat2_align:
 	shell:
 		"""
 		module load samtools-1.6
+		mkdir {params.local_tmp}
 		cp {input[0]} {params.local_tmp}/{wildcards.sample}_1.fq.gz
 		cp {input[1]} {params.local_tmp}/{wildcards.sample}_2.fq.gz
 		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} --novel-splicesite-outfile {output.ss} -1 {params.local_tmp}/{wildcards.sample}_1.fq.gz -2 {params.local_tmp}/{wildcards.sample}_2.fq.gz | samtools view -Sb > {params.local_tmp}/{wildcards.sample}.bam

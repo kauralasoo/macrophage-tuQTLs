@@ -30,6 +30,8 @@ mean_tpm_df = dplyr::mutate(mean_tpm_per_condition, transcript_id = rownames(mea
   dplyr::left_join(dplyr::select(gene_metadata, gene_id, transcript_id), by = "transcript_id") %>%
   dplyr::transmute(expressed_transcript_id = transcript_id, gene_id, tpm_naive = naive) %>%
   tbl_df2()
+saveRDS(mean_tpm_df, "results/simulations/transcript_tpms.rds")
+
 
 #Identify QTLs
 naive_qtls = dplyr::filter(salmonella_qtls$Ensembl_87$naive, p_fdr < 0.1)
@@ -66,6 +68,7 @@ all_differences = purrr::map2(tx1_list, tx2_list, ~findAllDiffs(.x, .y, exons)) 
 
 #Count the total number of differences
 all_diff_df = dplyr::mutate(all_differences, diff_count = rowSums(sign(all_differences[,c(3:5)])))
+saveRDS(all_diff_df, "results/simulations/trQTL_pair_diffs.rds")
 
 #Estimate fraction
 table(all_diff_df$diff_count)/sum(table(all_diff_df$diff_count))
@@ -77,4 +80,5 @@ multi_qtl_count = dplyr::filter(salmonella_qtls$reviseAnnotations$naive, p_fdr <
   dplyr::group_by(gene_id) %>% 
   dplyr::summarise(qtl_count = length(gene_id))
 table(multi_qtl_count$qtl_count)/sum(table(multi_qtl_count$qtl_count))
+
 

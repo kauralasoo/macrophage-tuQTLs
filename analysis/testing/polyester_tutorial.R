@@ -1,5 +1,5 @@
-library(polyester)
-library(Biostrings)
+library("polyester")
+library("Biostrings")
 
 fold_changes = matrix(c(4,4,rep(1,18),1,1,4,4,rep(1,16)), nrow=20)
 head(fold_changes)

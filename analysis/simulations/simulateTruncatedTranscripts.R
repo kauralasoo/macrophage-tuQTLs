@@ -1,5 +1,8 @@
 library("BSgenome.Hsapiens.NCBI.GRCh38")
 library("BSgenome")
+library("devtools")
+load_all("../txrevise/")
+
 
 #Import transcript annotations
 txdb = loadDb("../../annotations/GRCh38/genes/Ensembl_87/TranscriptDb_GRCh38_87.db")
@@ -45,30 +48,66 @@ all_differences = purrr::map2(tx1_list, tx2_list, ~findAllDiffs(.x, .y, exons)) 
 
 #Merge results
 merged_diffs = dplyr::left_join(truncated_pairs, all_differences, by = c("full_tx" = "tx1_id")) %>% tbl_df()
+unique_tx_ids = unique(c(merged_diffs$full_tx, merged_diffs$truncated_tx))
 
+#Extract metadata for all transcripts
+tx_meta = dplyr::filter(transcript_data, ensembl_transcript_id %in% unique_tx_ids) %>%
+  txrevise::filterTranscriptMetadata()
+tx_exons = exons[unique_tx_ids]
+tx_cdss = cdss[intersect(unique_tx_ids, names(cdss))]
 
+#Extend transcripts and construct events
+extendTruncatedTx <- function(gene_id, tx_meta, exons, cdss){
+  print(gene_id)
+  
+  #Extract gene data
+  gene_data = txrevise::extractGeneData(gene_id, tx_meta, exons, cdss)
+  
+  #Extend transcripts
+  gene_extended_tx = txrevise::extendTranscriptsPerGene(gene_data$metadata, gene_data$exons, gene_data$cdss)
+  gene_data_ext = txrevise::replaceExtendedTranscripts(gene_data, gene_extended_tx)
+  
+  #Construct alt events
+  alt_events = txrevise::constructAlternativeEvents(gene_data_ext$exons, gene_id)
+  
+  #Return results
+  return(list(extended_tx = gene_data_ext, alt_events = alt_events))
+}
 
-tx_meta = dplyr::filter(transcript_data, ensembl_transcript_id %in% c("ENST00000514717", "ENST00000506520"))
+#Apply to all genes
+gene_ids = unique(tx_meta$ensembl_gene_id)
+gene_ids_list = seqUtils::idVectorToList(gene_ids)
+alt_events = purrr::map(gene_ids_list, ~extendTruncatedTx(., tx_meta, tx_exons, tx_cdss))
+saveRDS(alt_events, "results/simulations/extended_tx_and_events.rds")
 
-gene_data = list()
-gene_data$exons = exons[c("ENST00000514717", "ENST00000506520")]
-gene_data$cdss = cdss[c("ENST00000514717", "ENST00000506520")]
-gene_data$metadata = txrevise::filterTranscriptMetadata(tx_meta)
+#Extract extended transcripts
+new_exons = purrr::map(alt_events, ~as.list(.$extended_tx$exons)) %>% purrr::flatten()
+new_exons = new_exons[names(tx_exons)]
 
-gene_extended_tx = txrevise::extendTranscriptsPerGene(gene_data$metadata, gene_data$exons, gene_data$cdss)
-gene_data_ext = txrevise::replaceExtendedTranscripts(gene_data, gene_extended_tx)
+#Sort exons by strand
+sortGrangesByStrand <- function(granges){
+  tx_strand = as.character(strand(granges))[1]
+  if(tx_strand == "-"){
+    granges = sort(granges, decreasing = T)
+  } else{
+    granges = sort(granges, decreasing = F)
+  }
+  return(granges)
+}
 
-old_sequences = BSgenome::getSeq(BSgenome.Hsapiens.NCBI.GRCh38, gene_data$exons)
-new_sequences = BSgenome::getSeq(BSgenome.Hsapiens.NCBI.GRCh38, gene_data_ext$exons)
+old_exons_sorted = purrr::map(as.list(tx_exons), sortGrangesByStrand)
+new_exons_sorted = purrr::map(new_exons, sortGrangesByStrand)
 
-old_fastas = DNAStringSet(lapply(old_sequences, unlist))
-new_fastas = DNAStringSet(lapply(new_sequences, unlist))
+#Extract sequences
+old_sequences = BSgenome::getSeq(BSgenome.Hsapiens.NCBI.GRCh38, GRangesList(old_exons_sorted))
+new_sequences = BSgenome::getSeq(BSgenome.Hsapiens.NCBI.GRCh38, GRangesList(new_exons_sorted))
 
-wiggleplotr::plotTranscripts(gene_data$exons)
-wiggleplotr::plotTranscripts(gene_data_ext$exons)
+#Concat exons
+old_fastas = DNAStringSet(lapply(old_sequences, unlist))[tx_meta$ensembl_transcript_id]
+new_fastas = DNAStringSet(lapply(new_sequences, unlist))[tx_meta$ensembl_transcript_id]
 
-
-
-
+#Write transcripts to disk
+writeXStringSet(RNAStringSet(old_fastas), 'results/simulations/original_transcripts.fa')
+writeXStringSet(RNAStringSet(new_fastas), 'results/simulations/extended_transcripts.fa')
 
 

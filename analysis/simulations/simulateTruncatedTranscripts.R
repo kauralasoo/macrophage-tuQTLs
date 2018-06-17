@@ -1,13 +1,18 @@
-library("BSgenome.Hsapiens.NCBI.GRCh38")
+library("dplyr")
 library("BSgenome")
 library("devtools")
 load_all("../txrevise/")
+library("BSgenome.Hsapiens.NCBI.GRCh38")
 
 
 #Import transcript annotations
 txdb = loadDb("../../annotations/GRCh38/genes/Ensembl_87/TranscriptDb_GRCh38_87.db")
 exons = exonsBy(txdb, by = "tx", use.names=TRUE)
 cdss = cdsBy(txdb, by = "tx", use.names=TRUE)
+
+#Import QTLs
+salmonella_qtls = readRDS("results/trQTLs/salmonella_trQTL_min_pvalues.rds")
+vcf_file = readRDS("results/genotypes/salmonella/imputed.86_samples.sorted.filtered.named.rds")
 
 #Import QTL pairs
 QTL_pairs = readRDS("results/simulations/trQTL_pair_diffs.rds")
@@ -55,6 +60,7 @@ tx_meta = dplyr::filter(transcript_data, ensembl_transcript_id %in% unique_tx_id
   txrevise::filterTranscriptMetadata()
 tx_exons = exons[unique_tx_ids]
 tx_cdss = cdss[intersect(unique_tx_ids, names(cdss))]
+saveRDS(tx_meta, "results/simulations/transcript_meta.rds")
 
 #Extend transcripts and construct events
 extendTruncatedTx <- function(gene_id, tx_meta, exons, cdss){
@@ -109,5 +115,49 @@ new_fastas = DNAStringSet(lapply(new_sequences, unlist))[tx_meta$ensembl_transcr
 #Write transcripts to disk
 writeXStringSet(RNAStringSet(old_fastas), 'results/simulations/original_transcripts.fa')
 writeXStringSet(RNAStringSet(new_fastas), 'results/simulations/extended_transcripts.fa')
+
+
+#Calculate effect sizes for tuQTLs
+tx_meta = readRDS("results/simulations/transcript_meta.rds")
+lead_variants = dplyr::filter(salmonella_qtls$Ensembl_87$naive, group_id %in% tx_meta$ensembl_gene_id) %>%
+  dplyr::select(group_id, snp_id)
+genotype_matrix = vcf_file$genotypes[lead_variants$snp_id,]
+genotype_df = as_tibble(genotype_matrix) %>%
+  dplyr::mutate(ensembl_gene_id = lead_variants$group_id) %>%
+  dplyr::select(ensembl_gene_id, everything())
+
+#Add effect size multiplier to tx_meta
+set.seed(1)
+effect_direction = dplyr::select(tx_meta, ensembl_gene_id, ensembl_transcript_id) %>% 
+  dplyr::group_by(ensembl_gene_id) %>% 
+  dplyr::mutate(effect_multiplier = c(1,-1)) %>% 
+  dplyr::mutate(is_de = round(runif(1,0,1))) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(effect = effect_multiplier*is_de) %>%
+  dplyr::select(ensembl_gene_id, ensembl_transcript_id, effect)
+
+#Make effect size matrix
+fc_matrix = dplyr::left_join(effect_direction, genotype_df, by = "ensembl_gene_id") %>%
+  dplyr::select(-ensembl_gene_id, -ensembl_transcript_id, -effect) %>%
+  as.matrix()
+row.names(fc_matrix) = effect_direction$ensembl_transcript_id
+fc_matrix = effect_direction$effect*fc_matrix
+final_effects = 2^fc_matrix
+
+#Simulate reads
+# ~20x coverage ----> reads per transcript = transcriptlength/readlength * 20
+# here all transcripts will have ~equal FPKM
+fasta = readDNAStringSet("results/simulations/original_transcripts.fa")
+readspertx = round(20 * width(fasta) / 100)
+
+# simulation call:
+fold_changes = final_effects
+fold_changes[is.na(fold_changes)] = 1
+
+simulate_experiment('results/simulations/original_transcripts.fa', reads_per_transcript=readspertx, 
+                    num_reps=rep(1:86), fold_changes=fold_changes, outdir='simulated_reads', gzip=TRUE) 
+
+
+
 
 

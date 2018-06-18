@@ -1,6 +1,7 @@
 library("dplyr")
 library("BSgenome")
 library("devtools")
+library("data.table")
 library("GenomicRanges")
 library("GenomicFeatures")
 load_all("../txrevise/")
@@ -157,7 +158,7 @@ fasta = readDNAStringSet("results/simulations/original_transcripts.fa")
 readspertx = round(50 * width(fasta) / 100)
 
 simulate_experiment('results/simulations/original_transcripts.fa', reads_per_transcript=readspertx, 
-                    num_reps=c(1,1), fold_changes=fold_changes[,1:2],
+                    num_reps=rep(1,86), fold_changes=fold_changes,
                     outdir='results/simulations/original_transcripts', gzip=TRUE, strand_specific = TRUE) 
 
 #Simulate reads from the extended transcripts
@@ -199,7 +200,9 @@ event_metadata = txrevise::constructEventMetadata(names(alt_events))
 
 #Make annotations
 annotations = txrevise::transcriptsToAnnotations(alt_events, event_metadata)
-rtracklayer::export.gff3(annotations, "results/simulations/txrevise_annotatons.gff3")
+rtracklayer::export.gff3(annotations[annotations$gene_id %like% "upstream"], "results/simulations/txrevise_upstream.gff3")
+rtracklayer::export.gff3(annotations[annotations$gene_id %like% "contained"], "results/simulations/txrevise_contained.gff3")
+rtracklayer::export.gff3(annotations[annotations$gene_id %like% "downstream"], "results/simulations/txrevise_downstream.gff3")
 
 
 

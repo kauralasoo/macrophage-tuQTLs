@@ -48,3 +48,8 @@ snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_StringTie.snakefil
 
 #Run fgwas to perform diease enrichments
 snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_fgwas_disease.snakefile processed/salmonella/out.txt --jobs 30 --configfile configs/salmonella_trQTL_config.yaml
+
+
+
+#Run simulations with txrevise and Salmon
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s quantify_simulations.snakefile processed/sim_original/out.txt --jobs 30 --configfile configs/simulations_config.yaml

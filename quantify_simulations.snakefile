@@ -49,7 +49,7 @@ rule merge_salmon:
 #Make sure that all final output files get created
 rule make_all:
 	input:
-		expand("processed/{study}/matrices/{annotation}.salmon_txrevise.rds", study = config["study"], annotation=config["annotations"]),
+		expand("processed/{{study}}/matrices/{annotation}.salmon_txrevise.rds", annotation=config["annotations"]),
 	output:
 		"processed/{study}/out.txt"
 	resources:

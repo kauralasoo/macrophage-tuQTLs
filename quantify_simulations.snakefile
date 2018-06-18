@@ -13,8 +13,8 @@ rule construct_salmon_index:
 #Quantify gene expression using full Ensembl annotations
 rule reviseAnnotation_quant_salmon:
 	input:
-		fq1 = "processed/{study}/fastq/{sample}_1.fastq.gz",
-		fq2 = "processed/{study}/fastq/{sample}_2.fastq.gz",
+		fq1 = "processed/{study}/fastq/{sample}_1.fasta.gz",
+		fq2 = "processed/{study}/fastq/{sample}_2.fasta.gz",
 		salmon_index = "processed/annotations/salmon_index/{annotation}"
 	output:
 		"processed/{study}/salmon/{annotation}/{sample}/quant.sf"

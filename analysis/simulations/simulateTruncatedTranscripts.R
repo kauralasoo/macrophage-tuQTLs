@@ -1,7 +1,10 @@
 library("dplyr")
 library("BSgenome")
 library("devtools")
+library("GenomicRanges")
+library("GenomicFeatures")
 load_all("../txrevise/")
+load_all("../seqUtils/")
 library("BSgenome.Hsapiens.NCBI.GRCh38")
 
 
@@ -21,7 +24,7 @@ QTL_pairs = readRDS("results/simulations/trQTL_pair_diffs.rds")
 transcript_data = tbl_df(readRDS("../../annotations/GRCh38/genes/Ensembl_87/Homo_sapiens.GRCh38.87.compiled_tx_metadata.rds"))
 transcript_meta = dplyr::select(transcript_data, ensembl_transcript_id, cds_start_NF, cds_end_NF)
 
-truncated_transcripts = dplyr::filter(truncated_transcripts, cds_start_NF == 1 | cds_end_NF == 1)
+truncated_transcripts = dplyr::filter(transcript_meta, cds_start_NF == 1 | cds_end_NF == 1)
 
 #Identify trQTL pairs with truncated transcripts
 first_truncated = dplyr::semi_join(QTL_pairs, truncated_transcripts, by = c("tx1_id" = "ensembl_transcript_id"))
@@ -58,9 +61,10 @@ unique_tx_ids = unique(c(merged_diffs$full_tx, merged_diffs$truncated_tx))
 #Extract metadata for all transcripts
 tx_meta = dplyr::filter(transcript_data, ensembl_transcript_id %in% unique_tx_ids) %>%
   txrevise::filterTranscriptMetadata()
-tx_exons = exons[unique_tx_ids]
-tx_cdss = cdss[intersect(unique_tx_ids, names(cdss))]
 saveRDS(tx_meta, "results/simulations/transcript_meta.rds")
+tx_meta = readRDS("results/simulations/transcript_meta.rds")
+tx_exons = exons[tx_meta$ensembl_transcript_id]
+tx_cdss = cdss[intersect(tx_meta$ensembl_transcript_id, names(cdss))]
 
 #Extend transcripts and construct events
 extendTruncatedTx <- function(gene_id, tx_meta, exons, cdss){
@@ -142,20 +146,59 @@ fc_matrix = dplyr::left_join(effect_direction, genotype_df, by = "ensembl_gene_i
   as.matrix()
 row.names(fc_matrix) = effect_direction$ensembl_transcript_id
 fc_matrix = effect_direction$effect*fc_matrix
-final_effects = 2^fc_matrix
+fold_changes = 2^fc_matrix
+fold_changes[is.na(fold_changes)] = 1
 
-#Simulate reads
+#Simulate reads from the original transcripts
 # ~20x coverage ----> reads per transcript = transcriptlength/readlength * 20
 # here all transcripts will have ~equal FPKM
 fasta = readDNAStringSet("results/simulations/original_transcripts.fa")
-readspertx = round(20 * width(fasta) / 100)
-
-# simulation call:
-fold_changes = final_effects
-fold_changes[is.na(fold_changes)] = 1
+readspertx = round(100 * width(fasta) / 100)
 
 simulate_experiment('results/simulations/original_transcripts.fa', reads_per_transcript=readspertx, 
-                    num_reps=rep(1:86), fold_changes=fold_changes, outdir='simulated_reads', gzip=TRUE) 
+                    num_reps=rep(1,86), fold_changes=fold_changes,
+                    outdir='results/simulations/original_transcripts', gzip=TRUE) 
+
+#Simulate reads from the extended transcripts
+fasta = readDNAStringSet("results/simulations/extended_transcripts.fa")
+readspertx = round(100 * width(fasta) / 100)
+
+simulate_experiment('results/simulations/extended_transcripts.fa', reads_per_transcript=readspertx, 
+                    num_reps=rep(1,86), fold_changes=fold_changes,
+                    outdir='results/simulations/extended_transcripts', gzip=TRUE) 
+
+
+
+
+#Construct alternative events
+#Extend transcripts and construct events
+constructEvents <- function(gene_id, tx_meta, exons, cdss){
+  print(gene_id)
+  
+  #Extract gene data
+  gene_data = txrevise::extractGeneData(gene_id, tx_meta, exons, cdss)
+  
+  #Construct alt events
+  alt_events = txrevise::constructAlternativeEvents(gene_data$exons, gene_id)
+  
+  #Return results
+  return(alt_events)
+}
+
+#Apply to all genes
+gene_ids = unique(tx_meta$ensembl_gene_id)
+gene_ids_list = seqUtils::idVectorToList(gene_ids)
+alt_events = purrr::map(gene_ids_list, ~constructEvents(., tx_meta, tx_exons, tx_cdss))
+
+#Flatten
+alt_events = purrr::flatten(alt_events) %>% flattenAlternativeEvents()
+
+#Construct event metadata
+event_metadata = txrevise::constructEventMetadata(names(alt_events))
+
+#Make annotations
+annotations = txrevise::transcriptsToAnnotations(alt_events, event_metadata)
+rtracklayer::export.gff3(annotations, "results/simulations/txrevise_annotatons.gff3")
 
 
 

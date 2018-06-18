@@ -89,6 +89,7 @@ gene_ids = unique(tx_meta$ensembl_gene_id)
 gene_ids_list = seqUtils::idVectorToList(gene_ids)
 alt_events = purrr::map(gene_ids_list, ~extendTruncatedTx(., tx_meta, tx_exons, tx_cdss))
 saveRDS(alt_events, "results/simulations/extended_tx_and_events.rds")
+alt_events = readRDS("results/simulations/extended_tx_and_events.rds")
 
 #Extract extended transcripts
 new_exons = purrr::map(alt_events, ~as.list(.$extended_tx$exons)) %>% purrr::flatten()
@@ -117,8 +118,8 @@ old_fastas = DNAStringSet(lapply(old_sequences, unlist))[tx_meta$ensembl_transcr
 new_fastas = DNAStringSet(lapply(new_sequences, unlist))[tx_meta$ensembl_transcript_id]
 
 #Write transcripts to disk
-writeXStringSet(RNAStringSet(old_fastas), 'results/simulations/original_transcripts.fa')
-writeXStringSet(RNAStringSet(new_fastas), 'results/simulations/extended_transcripts.fa')
+writeXStringSet(old_fastas, 'results/simulations/original_transcripts.fa')
+writeXStringSet(new_fastas, 'results/simulations/extended_transcripts.fa')
 
 
 #Calculate effect sizes for tuQTLs
@@ -153,19 +154,19 @@ fold_changes[is.na(fold_changes)] = 1
 # ~20x coverage ----> reads per transcript = transcriptlength/readlength * 20
 # here all transcripts will have ~equal FPKM
 fasta = readDNAStringSet("results/simulations/original_transcripts.fa")
-readspertx = round(100 * width(fasta) / 100)
+readspertx = round(50 * width(fasta) / 100)
 
 simulate_experiment('results/simulations/original_transcripts.fa', reads_per_transcript=readspertx, 
-                    num_reps=rep(1,86), fold_changes=fold_changes,
-                    outdir='results/simulations/original_transcripts', gzip=TRUE) 
+                    num_reps=c(1,1), fold_changes=fold_changes[,1:2],
+                    outdir='results/simulations/original_transcripts', gzip=TRUE, strand_specific = TRUE) 
 
 #Simulate reads from the extended transcripts
 fasta = readDNAStringSet("results/simulations/extended_transcripts.fa")
-readspertx = round(100 * width(fasta) / 100)
+readspertx = round(50 * width(fasta) / 100)
 
 simulate_experiment('results/simulations/extended_transcripts.fa', reads_per_transcript=readspertx, 
                     num_reps=rep(1,86), fold_changes=fold_changes,
-                    outdir='results/simulations/extended_transcripts', gzip=TRUE) 
+                    outdir='results/simulations/extended_transcripts', gzip=TRUE, strand_specific = TRUE) 
 
 
 

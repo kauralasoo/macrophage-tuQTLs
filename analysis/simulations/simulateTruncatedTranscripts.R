@@ -58,6 +58,7 @@ all_differences = purrr::map2(tx1_list, tx2_list, ~findAllDiffs(.x, .y, exons)) 
 #Merge results
 merged_diffs = dplyr::left_join(truncated_pairs, all_differences, by = c("full_tx" = "tx1_id")) %>% tbl_df()
 unique_tx_ids = unique(c(merged_diffs$full_tx, merged_diffs$truncated_tx))
+saveRDS(merged_diffs, "results/simulations/transcript_diffs.rds")
 
 #Extract metadata for all transcripts
 tx_meta = dplyr::filter(transcript_data, ensembl_transcript_id %in% unique_tx_ids) %>%

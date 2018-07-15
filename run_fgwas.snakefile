@@ -48,7 +48,7 @@ rule run_fgwas:
 	params:
 		out_prefix = "processed/{study}/fgwas/output/{model}/{annot_type}/{condition}"
 	resources:
-		mem = 42000
+		mem = 56000
 	threads: 1
 	shell:
 		"""

@@ -54,3 +54,7 @@ snakemake --cluster scripts/snakemake_submit_UT.py -np -s run_fgwas_disease.snak
 #Run simulations with txrevise and Salmon
 snakemake --cluster scripts/snakemake_submit_UT.py -np -s quantify_simulations.snakefile processed/sim_original/out.txt --jobs 30 --configfile configs/simulations_config.yaml
 snakemake --cluster scripts/snakemake_submit_UT.py -np -s quantify_simulations.snakefile processed/sim_extended/out.txt --jobs 30 --configfile configs/simulations_config.yaml
+
+#Run new simulations with txrevise and Salmon
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s quantify_simulations.snakefile processed/sim_both/out.txt --jobs 30 --configfile configs/simulations_config.yaml
+snakemake --cluster scripts/snakemake_submit_UT.py -np -s quantify_simulations.snakefile processed/sim_one/out.txt --jobs 30 --configfile configs/simulations_config.yaml

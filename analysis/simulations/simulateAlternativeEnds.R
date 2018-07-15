@@ -87,6 +87,24 @@ one_tx_sorted = c(as.list(full_length_txs), truncated_one) %>%
 both_tx_sorted = c(as.list(full_length_txs), truncated_both) %>%
   purrr::map(sortGrangesByStrand)
 
+
+#Caclculate differences between truncated and full-length txs
+findAllDiffs <- function(tx1, tx2, exons){
+  print(paste(tx1, tx2))
+  diff = txrevise::indentifyAddedRemovedRegions(tx1, tx2, exons) %>%
+    calculateBasepairDifference()
+}
+
+#Find all differences between the two transcripts
+tx1_list = as.list(tx_pairs$full_tx)
+tx2_list = as.list(tx_pairs$truncated_tx)
+all_differences = purrr::map2(tx1_list, tx2_list, ~findAllDiffs(.x, .y, one_tx_sorted)) %>% purrr::map_df(identity)
+
+#Merge results
+merged_diffs = dplyr::left_join(tx_pairs, all_differences, by = c("full_tx" = "tx1_id")) %>% tbl_df() %>%
+  dplyr::select(-tx2_id)
+saveRDS(merged_diffs, "results/simulations/sim_one_diffs.rds")
+
 #Extract sequences
 one_sequences = BSgenome::getSeq(BSgenome.Hsapiens.NCBI.GRCh38, GRangesList(one_tx_sorted))
 both_sequences = BSgenome::getSeq(BSgenome.Hsapiens.NCBI.GRCh38, GRangesList(both_tx_sorted))

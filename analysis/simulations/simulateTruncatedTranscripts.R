@@ -93,6 +93,25 @@ alt_events = purrr::map(gene_ids_list, ~extendTruncatedTx(., tx_meta, tx_exons, 
 saveRDS(alt_events, "results/simulations/extended_tx_and_events.rds")
 alt_events = readRDS("results/simulations/extended_tx_and_events.rds")
 
+
+#Recalculate differences after transcripts have been extended
+extended_transcripts = purrr::map(alt_events, ~as.list(.$extended_tx$exons)) %>% purrr::flatten()
+
+#Find all differences between the two transcripts
+tx1_list = as.list(truncated_pairs$full_tx)
+tx2_list = as.list(truncated_pairs$truncated_tx)
+all_differences = purrr::map2(tx1_list, tx2_list, ~findAllDiffs(.x, .y, extended_transcripts)) %>% purrr::map_df(identity)
+merged_diffs = dplyr::left_join(truncated_pairs, all_differences, by = c("full_tx" = "tx1_id")) %>% tbl_df() %>%
+  dplyr::select(-tx2_id)
+
+#Mark truncation events that have actually been extended
+all_diffs = dplyr::mutate(merged_diffs, truncation = NA) %>%
+  dplyr::mutate(truncation = ifelse(cds_start_NF == 1 & upstream == 0, "start", truncation)) %>%
+  dplyr::mutate(truncation = ifelse(cds_end_NF == 1 & downstream == 0, "end", truncation)) %>%
+  dplyr::mutate(truncation = ifelse((cds_start_NF == 1 & upstream == 0) & (cds_end_NF == 1 & downstream == 0), "both", truncation))
+saveRDS(all_diffs, "results/simulations/extended_transcript_diffs.rds")
+
+
 #Extract extended transcripts
 new_exons = purrr::map(alt_events, ~as.list(.$extended_tx$exons)) %>% purrr::flatten()
 new_exons = new_exons[names(tx_exons)]
@@ -195,6 +214,7 @@ alt_events = purrr::map(gene_ids_list, ~constructEvents(., tx_meta, tx_exons, tx
 
 #Flatten
 alt_events = purrr::flatten(alt_events) %>% flattenAlternativeEvents()
+saveRDS(alt_events, "results/simulations/qunatification_alt_events.rds")
 
 #Construct event metadata
 event_metadata = txrevise::constructEventMetadata(names(alt_events))

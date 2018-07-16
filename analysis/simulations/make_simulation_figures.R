@@ -223,3 +223,8 @@ plot_data = constructQtlPlotDataFrame(selected_phenotype_id, selected_snp_id,
 ggplot(plot_data, aes(x = genotype_value, y = norm_exp)) + geom_boxplot() + geom_point()
 
 
+
+#Option 1: Align to geneome first with hisat2, then use salmon (or RSEM) to quantify
+#Option 2: Construct alternative event annotations that contain 
+
+

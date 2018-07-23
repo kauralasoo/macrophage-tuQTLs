@@ -91,6 +91,7 @@ rule quantify_whippet:
 	resources:
 		mem = 1000
 	threads: 1
+	shell:
 		"""
 		module load julia-0.6.0
 		julia ~/.julia/v0.6/Whippet/bin/whippet-quant.jl {input.fq1} {input.fq2} -o {params.out} -x {config[whippet_index]}

@@ -63,10 +63,44 @@ rule merge_salmon:
 		Rscript scripts/merge_Salmon.R -s {params.sample_ids} -d {params.dir} -o {output}
 		"""
 
+rule make_fastq:
+	input:
+		fa1 = "processed/{study}/fastq/{sample}_1.fasta.gz",
+		fa2 = "processed/{study}/fastq/{sample}_2.fasta.gz"
+	output:
+		fq1 = "processed/{study}/fq/{sample}_1.fq.gz",
+		fq2 = "processed/{study}/fq/{sample}_2.fq.gz"
+	resources:
+		mem = 100
+	threads: 1
+	shell:
+		"""
+		module load perl-5.22.0
+		perl scripts/fasta_to_fastq.pl {input.fa1} | gzip > {output.fq1}
+		perl scripts/fasta_to_fastq.pl {input.fa2} | gzip > {output.fq2}
+		"""
+
+rule quantify_whippet:
+	input:
+		fq1 = "processed/{study}/fq/{sample}_1.fq.gz",
+		fq2 = "processed/{study}/fq/{sample}_2.fq.gz"
+	output:
+		"processed/{study}/whippet/{sample}.psi.gz"
+	params:
+		out = "processed/{study}/whippet/{sample}"
+	resources:
+		mem = 1000
+	threads: 1
+		"""
+		module load julia-0.6.0
+		julia ~/.julia/v0.6/Whippet/bin/whippet-quant.jl {input.fq1} {input.fq2} -o {params.out} -x {config[whippet_index]}
+		"""
+
 #Make sure that all final output files get created
 rule make_all:
 	input:
 		expand("processed/{{study}}/matrices/{annotation}.salmon_txrevise.rds", annotation=config["annotations"]),
+		expand("processed/{{study}}/whippet/{sample}.psi.gz", sample=config["samples"])
 	output:
 		"processed/{study}/out.txt"
 	resources:

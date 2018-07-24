@@ -93,7 +93,7 @@ rule shuffle_fastq:
 	shell:
 		"""
 		~/anaconda3/envs/py3.6/bin/seqkit shuffle {input.fq1} -s 100 | gzip > {output.fq1}
-		~/anaconda3/envs/py3.6/bin/seqkit shuffle {input.fq1} -s 100 | gzip > {output.fq1}
+		~/anaconda3/envs/py3.6/bin/seqkit shuffle {input.fq2} -s 100 | gzip > {output.fq2}
 		"""
 
 rule quantify_whippet:

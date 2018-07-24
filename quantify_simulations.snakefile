@@ -88,7 +88,7 @@ rule shuffle_fastq:
 		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",
 		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz"
 	resources:
-		mem = 1000
+		mem = 6000
 	threads: 1
 	shell:
 		"""

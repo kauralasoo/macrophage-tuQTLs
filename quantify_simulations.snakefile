@@ -38,10 +38,10 @@ rule quant_salmon:
 	params:
 		out_prefix = "processed/{study}/salmon/{annotation}/{sample}"
 	resources:
-		mem = 10000
-	threads: 8	
+		mem = 2000
+	threads: 2	
 	shell:
-		"salmon --no-version-check quant --validateMappings --minScoreFraction 0.9 --noLengthCorrection --noFragLengthDist --noEffectiveLengthCorrection --libType {config[libType]} "
+		"salmon --no-version-check quant --libType {config[libType]} "
 		"--index {input.salmon_index} -1 {input.fq1} -2 {input.fq2} -p {threads} "
 		"-o {params.out_prefix}"
 

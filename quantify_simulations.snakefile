@@ -28,10 +28,10 @@ rule construct_salmon_index:
 		"salmon -no-version-check index -t {input} -i {output}"
 
 #Quantify gene expression using full Ensembl annotations
-rule reviseAnnotation_quant_salmon:
+rule quant_salmon:
 	input:
-		fq1 = "processed/{study}/fastq/{sample}_1.fasta.gz",
-		fq2 = "processed/{study}/fastq/{sample}_2.fasta.gz",
+		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",
+		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz"
 		salmon_index = "processed/annotations/salmon_index/{annotation}"
 	output:
 		"processed/{study}/salmon/{annotation}/{sample}/quant.sf"
@@ -72,18 +72,34 @@ rule make_fastq:
 		fq2 = "processed/{study}/fq/{sample}_2.fq.gz"
 	resources:
 		mem = 100
-	threads: 1
+	threads: 2
 	shell:
 		"""
 		module load perl-5.22.0
-		perl scripts/fasta_to_fastq.pl {input.fa1} | gzip > {output.fq1}
-		perl scripts/fasta_to_fastq.pl {input.fa2} | gzip > {output.fq2}
+		zcat {input.fa1} | perl scripts/fasta_to_fastq.pl - | gzip > {output.fq1}
+		zcat {input.fa2} | perl scripts/fasta_to_fastq.pl - | gzip > {output.fq2}
+		"""
+
+rule shuffle_fastq:
+	input:
+		fq1 = "processed/{study}/fq/{sample}_1.fq.gz",
+		fq2 = "processed/{study}/fq/{sample}_2.fq.gz"
+	output:
+		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",
+		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz"
+	shell:
+	resources:
+		mem = 1000
+	threads: 1
+		"""
+		~/anaconda3/envs/py3.6/bin/seqkit shuffle {input.fq1} -s 100 | gzip > {output.fq1}
+		~/anaconda3/envs/py3.6/bin/seqkit shuffle {input.fq1} -s 100 | gzip > {output.fq1}
 		"""
 
 rule quantify_whippet:
 	input:
-		fq1 = "processed/{study}/fq/{sample}_1.fq.gz",
-		fq2 = "processed/{study}/fq/{sample}_2.fq.gz"
+		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",
+		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz"
 	output:
 		"processed/{study}/whippet/{sample}.psi.gz"
 	params:

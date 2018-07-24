@@ -87,10 +87,10 @@ rule shuffle_fastq:
 	output:
 		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",
 		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz"
-	shell:
 	resources:
 		mem = 1000
 	threads: 1
+	shell:
 		"""
 		~/anaconda3/envs/py3.6/bin/seqkit shuffle {input.fq1} -s 100 | gzip > {output.fq1}
 		~/anaconda3/envs/py3.6/bin/seqkit shuffle {input.fq1} -s 100 | gzip > {output.fq1}

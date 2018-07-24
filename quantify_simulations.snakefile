@@ -31,7 +31,7 @@ rule construct_salmon_index:
 rule quant_salmon:
 	input:
 		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",
-		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz"
+		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz",
 		salmon_index = "processed/annotations/salmon_index/{annotation}"
 	output:
 		"processed/{study}/salmon/{annotation}/{sample}/quant.sf"

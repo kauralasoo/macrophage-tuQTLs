@@ -113,9 +113,6 @@ rule quantify_whippet:
 		julia ~/.julia/v0.6/Whippet/bin/whippet-quant.jl {input.fq1} {input.fq2} -o {params.out} -x {config[whippet_index]}
 		"""
 
-
-		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} --novel-splicesite-outfile {output.ss} -1 {params.local_tmp}/{wildcards.sample}_1.fq.gz -2 {params.local_tmp}/{wildcards.sample}_2.fq.gz | samtools view -Sb > {params.local_tmp}/{wildcards.sample}.bam
-
 rule hisat2_align:
 	input:
 		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",

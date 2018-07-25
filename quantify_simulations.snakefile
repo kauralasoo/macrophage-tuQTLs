@@ -113,11 +113,30 @@ rule quantify_whippet:
 		julia ~/.julia/v0.6/Whippet/bin/whippet-quant.jl {input.fq1} {input.fq2} -o {params.out} -x {config[whippet_index]}
 		"""
 
+
+		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} --novel-splicesite-outfile {output.ss} -1 {params.local_tmp}/{wildcards.sample}_1.fq.gz -2 {params.local_tmp}/{wildcards.sample}_2.fq.gz | samtools view -Sb > {params.local_tmp}/{wildcards.sample}.bam
+
+rule hisat2_align:
+	input:
+		fq1 = "processed/{study}/shuffled/{sample}_1.fq.gz",
+		fq2 = "processed/{study}/shuffled/{sample}_2.fq.gz"
+	output:
+		bam = "processed/{study}/hisat2/{sample}.bam"
+	resources:
+		mem = 8000
+	threads: 2
+	shell:
+		"""
+		module load samtools-1.6
+		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} -1 {input.fq1} -2 {input.fq2} | samtools view -Sb > {output.bam}
+		"""
+
 #Make sure that all final output files get created
 rule make_all:
 	input:
 		expand("processed/{{study}}/matrices/{annotation}.salmon_txrevise.rds", annotation=config["annotations"]),
-		expand("processed/{{study}}/whippet/{sample}.psi.gz", sample=config["samples"])
+		expand("processed/{{study}}/whippet/{sample}.psi.gz", sample=config["samples"]),
+		expand("processed/{{study}}/hisat2/{sample}.bam", sample=config["samples"])
 	output:
 		"processed/{study}/out.txt"
 	resources:

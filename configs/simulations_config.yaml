@@ -5,3 +5,9 @@ annotations: ["one_transcripts","both_transcripts","txrevise_upstream_both","txr
 libType: ISF
 reference_genome: /gpfs/rocket/home/a72094/annotations/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa
 whippet_index: processed/annotations/whippet_index/both_transcripts
+
+
+#HISAT2 config
+hisat2_index: /gpfs/hpchome/a72094/rocket/annotations/GRCh38/hisat2_index_v90/Homo_sapiens.GRCh38.dna.primary_assembly
+hisat2_flags: ""
+

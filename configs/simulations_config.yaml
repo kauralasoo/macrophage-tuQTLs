@@ -11,4 +11,4 @@ whippet_index: processed/annotations/whippet_index/both_transcripts
 hisat2_index: /gpfs/hpchome/a72094/rocket/annotations/GRCh38/hisat2_index_v90/Homo_sapiens.GRCh38.dna.primary_assembly
 hisat2_flags: ""
 
-dexseq_qtf: "processed/annotations/gff/both_transcripts.flat.gtf"
+dexseq_gtf: "processed/annotations/gff/both_transcripts.flat.gtf"

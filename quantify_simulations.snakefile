@@ -128,12 +128,27 @@ rule hisat2_align:
 		hisat2 -p {threads} -x {config[hisat2_index]} {config[hisat2_flags]} -1 {input.fq1} -2 {input.fq2} | samtools view -Sb > {output.bam}
 		"""
 
+rule quantify_dexseq:
+	input:
+		bam = "processed/{study}/hisat2/{sample}.bam"
+	output:
+		counts = "processed/{study}/DEXseq/{sample}.counts"
+	resources:
+		mem = 2000
+	threads: 1
+	shell:
+		"""
+		source activate py2.7
+		python scripts/dexseq_count.py {config[dexseq_gtf]} {input.bam} {output.counts} -p yes -s no -f bam -r name
+		"""
+
 #Make sure that all final output files get created
 rule make_all:
 	input:
 		expand("processed/{{study}}/matrices/{annotation}.salmon_txrevise.rds", annotation=config["annotations"]),
 		expand("processed/{{study}}/whippet/{sample}.psi.gz", sample=config["samples"]),
-		expand("processed/{{study}}/hisat2/{sample}.bam", sample=config["samples"])
+		expand("processed/{{study}}/hisat2/{sample}.bam", sample=config["samples"]),
+		expand("processed/{{study}}/DEXseq/{sample}.counts", sample=config["samples"])
 	output:
 		"processed/{study}/out.txt"
 	resources:

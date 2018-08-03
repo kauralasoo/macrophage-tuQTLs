@@ -153,7 +153,7 @@ rule sort_bams:
 	shell:
 		"""
 		module load samtools-1.6
-		samtools sort {input.bam} -Oz -o {output.bam}
+		samtools sort {input.bam} -O BAM -o {output.bam}
 		"""
 
 rule make_bedgraph:

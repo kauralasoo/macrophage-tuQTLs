@@ -181,7 +181,7 @@ rule make_all:
 		expand("processed/{{study}}/whippet/{sample}.psi.gz", sample=config["samples"]),
 		expand("processed/{{study}}/hisat2/{sample}.bam", sample=config["samples"]),
 		expand("processed/{{study}}/DEXseq/{sample}.counts", sample=config["samples"]),
-		expand("processed/{{study}}/bedgraph/{sample}.bg.gz", sample=config["samples"])
+		expand("processed/{{study}}/bigwig/{sample}.bw", sample=config["samples"])
 	output:
 		"processed/{study}/out.txt"
 	resources:

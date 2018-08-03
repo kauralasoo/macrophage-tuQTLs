@@ -156,19 +156,22 @@ rule sort_bams:
 		samtools sort {input.bam} -O BAM -o {output.bam}
 		"""
 
-rule make_bedgraph:
+rule make_bigwig:
 	input:
 		bam = "processed/{study}/hisat2/sorted/{sample}.bam"
 	output:
-		bg = "processed/{study}/bedgraph/{sample}.bg.gz"
+		bw = "processed/{study}/bigwig/{sample}.bw"
+	params:
+		bg = "processed/{study}/bigwig/{sample}.bg"
 	resources:
 		mem = 2000
 	threads: 1
 	shell:
 		"""
 		module load bedtools-2.26
-		module load samtools-1.6
-		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split | bgzip > {output.bg}
+		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split | bgzip > {params.bg}
+		bedGraphToBigWig {params.bg} {config[chr_lengths]} {output.bw}
+		rm {params.bg}
 		"""
 
 #Make sure that all final output files get created

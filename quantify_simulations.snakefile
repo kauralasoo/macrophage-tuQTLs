@@ -160,7 +160,7 @@ rule make_bedgraph:
 	input:
 		bam = "processed/{study}/hisat2/sorted/{sample}.bam"
 	output:
-		bg = "processed/{study}/bedgraph/{sample}.bg"
+		bg = "processed/{study}/bedgraph/{sample}.bg.gz"
 	resources:
 		mem = 2000
 	threads: 1
@@ -178,7 +178,7 @@ rule make_all:
 		expand("processed/{{study}}/whippet/{sample}.psi.gz", sample=config["samples"]),
 		expand("processed/{{study}}/hisat2/{sample}.bam", sample=config["samples"]),
 		expand("processed/{{study}}/DEXseq/{sample}.counts", sample=config["samples"]),
-		expand("processed/{{study}}/bedgraph/{sample}.bg", sample=config["samples"])
+		expand("processed/{{study}}/bedgraph/{sample}.bg.gz", sample=config["samples"])
 	output:
 		"processed/{study}/out.txt"
 	resources:

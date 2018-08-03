@@ -169,7 +169,7 @@ rule make_bigwig:
 	shell:
 		"""
 		module load bedtools-2.26
-		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split | bgzip > {params.bg}
+		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split > {params.bg}
 		bedGraphToBigWig {params.bg} {config[chr_lengths]} {output.bw}
 		rm {params.bg}
 		"""

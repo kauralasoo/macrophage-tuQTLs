@@ -167,8 +167,8 @@ rule make_bedgraph:
 	shell:
 		"""
 		module load bedtools-2.26
-		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split > {output.bg}
-		bgzip {output.bg}
+		module load samtools-1.6
+		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split | bgzip > {output.bg}
 		"""
 
 #Make sure that all final output files get created

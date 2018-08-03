@@ -142,13 +142,43 @@ rule quantify_dexseq:
 		python scripts/dexseq_count.py {config[dexseq_gtf]} {input.bam} {output.counts} -p yes -s no -f bam -r name
 		"""
 
+rule sort_bams:
+	input:
+		bam = "processed/{study}/hisat2/{sample}.bam"
+	output:
+		bam = "processed/{study}/hisat2/sorted/{sample}.bam"
+	resources:
+		mem = 2000
+	threads: 1
+	shell:
+		"""
+		module load samtools-1.6
+		samtools sort {input.bam} -Oz -o {output.bam}
+		"""
+
+rule make_bedgraph:
+	input:
+		bam = "processed/{study}/hisat2/sorted/{sample}.bam"
+	output:
+		bg = "processed/{study}/bedgraph/{sample}.bg"
+	resources:
+		mem = 2000
+	threads: 1
+	shell:
+		"""
+		module load bedtools-2.26
+		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split > {output.bg}
+		bgzip {output.bg}
+		"""
+
 #Make sure that all final output files get created
 rule make_all:
 	input:
 		expand("processed/{{study}}/matrices/{annotation}.salmon_txrevise.rds", annotation=config["annotations"]),
 		expand("processed/{{study}}/whippet/{sample}.psi.gz", sample=config["samples"]),
 		expand("processed/{{study}}/hisat2/{sample}.bam", sample=config["samples"]),
-		expand("processed/{{study}}/DEXseq/{sample}.counts", sample=config["samples"])
+		expand("processed/{{study}}/DEXseq/{sample}.counts", sample=config["samples"]),
+		expand("processed/{{study}}/bedgraph/{sample}.bg", sample=config["samples"])
 	output:
 		"processed/{study}/out.txt"
 	resources:

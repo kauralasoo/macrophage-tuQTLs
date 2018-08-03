@@ -12,3 +12,4 @@ hisat2_index: /gpfs/hpchome/a72094/rocket/annotations/GRCh38/hisat2_index_v90/Ho
 hisat2_flags: ""
 
 dexseq_gtf: "processed/annotations/gff/both_transcripts.flat.gtf"
+chr_lengths: "/gpfs/hpchome/a72094/rocket/annotations/GRCh38/chromosome_lengths.txt"

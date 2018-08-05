@@ -162,7 +162,8 @@ rule make_bigwig:
 	output:
 		bw = "processed/{study}/bigwig/{sample}.bw"
 	params:
-		bg = "processed/{study}/bigwig/{sample}.bg"
+		bg = "processed/{study}/bigwig/{sample}.bg",
+		bg_sorted = "processed/{study}/bigwig/{sample}.sorted.bg",
 	resources:
 		mem = 2000
 	threads: 1
@@ -170,8 +171,10 @@ rule make_bigwig:
 		"""
 		module load bedtools-2.26
 		bedtools genomecov -ibam {input.bam} -g {config[chr_lengths]} -bga -split > {params.bg}
-		bedGraphToBigWig {params.bg} {config[chr_lengths]} {output.bw}
+		LC_COLLATE=C sort -k1,1 -k2,2n {params.bg} > {params.bg_sorted}
+		bedGraphToBigWig {params.bg_sorted} {config[chr_lengths]} {output.bw}
 		rm {params.bg}
+		rm {params.bg_sorted}
 		"""
 
 #Make sure that all final output files get created

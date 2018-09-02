@@ -50,26 +50,49 @@ tx_meta = dplyr::filter(transcript_data, ensembl_transcript_id %in% unique_tx_id
   txrevise::filterTranscriptMetadata()
 
 #Remove 20% of the exons from both ends
-removeExons <- function(tx, remove_fraction = 0.2, both = FALSE){
+removeExons <- function(tx, remove_fraction = 0.2, both = FALSE, keep_trunk = FALSE){
   tx = sort(tx)
   exon_count = length(tx)
   remove_count = floor(0.2*exon_count)
   
   if(both){
     result = tx[(remove_count+1):(length(tx)-remove_count)]
+    if(keep_trunk){
+      first_exon = tx[remove_count]
+      new_first = GRanges(seqnames = seqnames(first_exon), ranges = IRanges(start = end(first_exon)-19, end = end(first_exon)), strand = strand(first_exon))
+      last_exon = tx[(length(tx)-remove_count)+1]
+      new_last = GRanges(seqnames = seqnames(last_exon), ranges = IRanges(start = start(last_exon), end = start(last_exon) + 19), strand = strand(last_exon))
+      result = c(new_first, result, new_last)
+    }
   } else {
     result = tx[(remove_count+1):length(tx)]
+    if(keep_trunk){
+      first_exon = tx[remove_count]
+      new_first = GRanges(seqnames = seqnames(first_exon), ranges = IRanges(start = end(first_exon)-19, end = end(first_exon)), strand = strand(first_exon))
+      result = c(new_first, result)
+    }
   }
   return(result)
 }
 
 #Remove both ends
-truncated_both = purrr::map(as.list(full_length_txs), ~removeExons(., both = TRUE))
+truncated_both = purrr::map(as.list(removeMetadata(full_length_txs)), ~removeExons(., both = TRUE, keep_trunk = FALSE))
 names(truncated_both) = tx_pairs$truncated_tx
+saveRDS(c(full_length_txs, truncated_both), "results/simulations/both_transcripts.rds")
 
 #Remove first end
-truncated_one = purrr::map(as.list(full_length_txs), ~removeExons(., both = FALSE))
+truncated_one = purrr::map(as.list(removeMetadata(full_length_txs)), ~removeExons(., both = FALSE, keep_trunk = FALSE))
 names(truncated_one) = tx_pairs$truncated_tx
+
+#Make a GTF file of the truncated transcripts
+event_metadata = dplyr::transmute(tx_meta, gene_id = ensembl_gene_id, transcript_id = ensembl_transcript_id)
+annotations = txrevise::transcriptsToAnnotations(removeMetadata(c(as.list(full_length_txs), truncated_both)), event_metadata)
+
+#Make annotations in gtf format
+exon_annotations = annotations[annotations$type == "exon"]
+elementMetadata(exon_annotations)$transcript_id = elementMetadata(exon_annotations)$Parent
+rtracklayer::export.gff2(exon_annotations, "results/simulations/both_transcripts.gtf")
+
 
 #Sort exons by strand
 sortGrangesByStrand <- function(granges){
@@ -153,7 +176,8 @@ readspertx = round(50 * width(fasta) / 100)
 
 simulate_experiment('results/simulations/one_transcripts.fa', reads_per_transcript=readspertx, 
                     num_reps=rep(1,86), fold_changes=fold_changes,
-                    outdir='results/simulations/one_transcripts', gzip=TRUE, strand_specific = TRUE) 
+                    outdir='results/simulations/one_transcripts', gzip=TRUE, strand_specific = TRUE,
+                    distr = "empirical") 
 
 #Simulate reads from the extended transcripts
 fasta = readDNAStringSet("results/simulations/both_transcripts.fa")
@@ -161,9 +185,37 @@ readspertx = round(50 * width(fasta) / 100)
 
 simulate_experiment('results/simulations/both_transcripts.fa', reads_per_transcript=readspertx, 
                     num_reps=rep(1,86), fold_changes=fold_changes,
-                    outdir='results/simulations/both_transcripts', gzip=TRUE, strand_specific = TRUE) 
+                    outdir='results/simulations/both_transcripts', gzip=TRUE, strand_specific = TRUE,
+                    distr = "empirical") 
 
-#Construct alternative events
+#### Simulate reads with custom fragment length distribution ####
+set.seed(123)
+data = rnorm(n = 1000, m = 250, sd = 124)
+data = data[data > 0]
+spline = logspline(data, lbound = 0, ubound = 1000)
+plot(spline)
+
+#One transcript
+fasta = readDNAStringSet("results/simulations/one_transcripts.fa")
+readspertx = round(50 * width(fasta) / 100)
+
+simulate_experiment('results/simulations/one_transcripts.fa', reads_per_transcript=readspertx, 
+                    num_reps=rep(1,86), fold_changes=fold_changes,
+                    outdir='results/simulations/one_transcripts', gzip=TRUE, strand_specific = TRUE,
+                    distr = "custom", custdens = spline) 
+
+#Simulate reads from the extended transcripts
+fasta = readDNAStringSet("results/simulations/both_transcripts.fa")
+readspertx = round(50 * width(fasta) / 100)
+
+simulate_experiment('results/simulations/both_transcripts.fa', reads_per_transcript=readspertx, 
+                    num_reps=rep(1,86), fold_changes=fold_changes,
+                    outdir='results/simulations/both_transcripts', gzip=TRUE, strand_specific = TRUE,
+                    distr = "custom", custdens = spline) 
+
+
+
+#### Construct alternative events ####
 constructEvents <- function(gene_id, tx_meta, exons, cdss){
   print(gene_id)
   
@@ -183,6 +235,7 @@ gene_ids_list = seqUtils::idVectorToList(gene_ids)
 tx_exons = GRangesList(both_tx_sorted)
 alt_events = purrr::map(gene_ids_list, ~constructEvents(., tx_meta, tx_exons, tx_exons))
 saveRDS(alt_events, "results/simulations/one_both_alt_events.rds")
+alt_events = readRDS("results/simulations/one_both_alt_events.rds")
 
 #Flatten
 alt_events_flat = purrr::flatten(alt_events) %>% flattenAlternativeEvents()
@@ -194,6 +247,5 @@ event_metadata = txrevise::constructEventMetadata(names(alt_events_flat))
 annotations = txrevise::transcriptsToAnnotations(alt_events_flat, event_metadata)
 rtracklayer::export.gff3(annotations[annotations$gene_id %like% "upstream"], "results/simulations/txrevise_upstream_both.gff3")
 rtracklayer::export.gff3(annotations[annotations$gene_id %like% "downstream"], "results/simulations/txrevise_downstream_both.gff3")
-
 
 

@@ -157,9 +157,12 @@ gene_diffs = dplyr::left_join(tx_diffs, gene_transcript_map, by = c("full_tx" = 
   dplyr::select(gene_id, diff_length, event_type, is_truncated)
 
 extended_by_truncation = dplyr::left_join(gene_diffs, extended_effects, by = c("gene_id", "event_type"))
+saveRDS(extended_by_truncation, "results/simulations/sim_one_effects.rds")
 
 ggplot(extended_by_truncation, aes(x = estimate, fill = DEstatus)) + geom_histogram() + facet_grid(event_type~is_truncated)
 ggplot(extended_by_truncation, aes(x = p.value, fill = DEstatus)) + geom_histogram() + facet_grid(event_type~is_truncated)
+
+
 
 View(dplyr::filter(extended_by_truncation, event_type == "3'end", is_truncated == TRUE, DEstatus == TRUE))
 

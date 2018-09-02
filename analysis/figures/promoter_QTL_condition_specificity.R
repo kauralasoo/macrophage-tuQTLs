@@ -20,8 +20,6 @@ salmonella_df = readRDS("results/trQTLs/variance_explained/salmonella_compiled_v
 acldl_df = readRDS("results/trQTLs/variance_explained/acldl_compiled_varExp.rds")
 qtls_df = dplyr::bind_rows(salmonella_df, acldl_df) %>%
   dplyr::left_join(group_map, by = c("phenotype_id" = "transcript_id")) %>%
-  #dplyr::left_join(true_promoters, by = "group_id") %>%
-  #dplyr::mutate(is_promoter = ifelse(is.na(is_promoter), FALSE, is_promoter)) %>%
   dplyr::mutate(is_response = ifelse(interaction_fraction > 0.5 & p_fdr < 0.1, TRUE, FALSE))
 
 txrevise_events = dplyr::filter(qtls_df, quant == "reviseAnnotations") %>%
@@ -38,27 +36,6 @@ other_counts = txrevise_events %>%
   group_by(condition, position) %>% 
   dplyr::summarise(qtl_count = length(phenotype_id), response_count = sum(is_response, na.rm = T)) %>% 
   dplyr::mutate(response_fraction = response_count/qtl_count)
-
-#Event names
-event_names = data_frame(position = c("upstream", "contained","downstream"), 
-                         event_type = factor(c("promoters", "internal exons", "3' ends"), levels = c("promoters", "internal exons", "3' ends")))
-
-count_df = other_counts %>%
-  dplyr::rename(condition_name = condition) %>%
-  dplyr::left_join(conditionFriendlyNames()) %>%
-  dplyr::left_join(event_names)
-
-promoter_plot = ggplot(count_df, aes(x = event_type, y = response_fraction, group = figure_name, color = figure_name)) + 
-  geom_point() + 
-  geom_line() + 
-  theme_light() +
-  theme(axis.title.x = element_blank()) +
-  theme(axis.text.x = element_text(angle = 15, hjust = 1, vjust = 1)) +
-  ylab("Response QTL fraction") +
-  scale_color_manual(name = "condition", values = conditionPalette()) + 
-  coord_cartesian(ylim = c(0,0.17))
-ggsave("results/figures/response_fraction_by_event_type.pdf", plot = promoter_plot, height = 2.5, width = 3)
-
 
 #### Look at true promoter events ####
 promoter_counts = promoter_events %>% 

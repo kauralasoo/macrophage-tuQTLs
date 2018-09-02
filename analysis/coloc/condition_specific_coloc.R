@@ -107,7 +107,7 @@ coloc_response_plot = dplyr::filter(cond_fraction, quant %in% c("Ensembl_87","fe
   theme_light() +
   xlab("") +
   ylab("Fraction of colocalisations \n that are response QTLs")
-ggsave("results/figures/coloc_response_fraction.pdf",coloc_response_plot, width = 3, height = 3)
+ggsave("results/figures/coloc_response_fraction.pdf",coloc_response_plot, width = 2.8, height = 2.5)
 
 #Compare positions
 coloc_response_plot = dplyr::filter(cond_fraction, quant %in% c("leafcutter","txrevise_promoters","txrevise_contained","txrevise_ends")) %>%
@@ -146,13 +146,13 @@ overlap_counts = dplyr::mutate(unique_trait_gene_pairs, id = gene_name) %>%
 
 #Comapre different quantification methods
 pdf("results/figures/coloc_GWAS_overlap_UpSetR.pdf", width = 3.5, height = 3, onefile = FALSE)
-upset(as.data.frame(overlap_counts), sets = rev(c("read count", "transcript usage", "Leafcutter", "txrevise")), 
-      order.by = "freq", keep.order = TRUE)
+upset(as.data.frame(overlap_counts), sets = rev(c("read count", "full-length txs", "Leafcutter", "txrevise")), 
+      order.by = "freq", keep.order = TRUE, mainbar.y.label = "Number of QTLs colocalising\n with GWAS hits")
 dev.off()
 
 #Comapre only splicing methods
 pdf("results/figures/coloc_GWAS_splicing_overlap_UpSetR.pdf", width = 3.5, height = 3, onefile = FALSE)
 upset(as.data.frame(overlap_counts), sets = rev(c("Leafcutter", "promoters", "internal exons", "3' ends")), 
-      order.by = "freq", keep.order = TRUE)
+      order.by = "freq", keep.order = TRUE, mainbar.y.label = "Number of QTLs colocalising\n with GWAS hits")
 dev.off()
 

@@ -69,10 +69,20 @@ all_differences = purrr::map2(tx1_list, tx2_list, ~findAllDiffs(.x, .y, exons)) 
 #Count the total number of differences
 all_diff_df = dplyr::mutate(all_differences, diff_count = rowSums(sign(all_differences[,c(3:5)])))
 saveRDS(all_diff_df, "results/simulations/trQTL_pair_diffs.rds")
+all_diff_df = readRDS("results/simulations/trQTL_pair_diffs.rds")
 
 #Estimate fraction
 table(all_diff_df$diff_count)/sum(table(all_diff_df$diff_count))
 
+#Make an UpSetR plot
+upset_df = dplyr::select(all_diff_df, -diff_count) %>%
+  dplyr::mutate_at(.vars = vars(3:5), .funs = function(x){ifelse((x > 0), 1,0)})
+colnames(upset_df)[3:5] = c("promoters", "3' ends", "internal exons")
+
+pdf("results/figures/coupling_naive_analysis.pdf", width = 5, height = 3, onefile = FALSE)
+upset(as.data.frame(upset_df), sets = rev(c("promoters", "internal exons", "3' ends")), 
+      order.by = "freq", keep.order = TRUE)
+dev.off()
 
 #Estimate the number of genes with multiple QTLs
 multi_qtl_count = dplyr::filter(salmonella_qtls$reviseAnnotations$naive, p_fdr < 0.1) %>% 

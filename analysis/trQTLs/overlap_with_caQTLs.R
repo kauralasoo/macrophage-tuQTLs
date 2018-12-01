@@ -95,5 +95,50 @@ fisher.test(matrix(c(124, 786-124, 103, 1105-103), ncol = 2, byrow = T))
 fisher.test(matrix(c(124, 786-124, (152+103), (1398+1105)-(152+103)), ncol = 2, byrow = T))
 
 
+#### Characterise the overlaps between caQTLs and puQTLs ####
+puQTL_overlaps = tuQTL_caQTL_overlaps
+
+#Import peak coordinates
+peak_coords = rtracklayer::import.gff3("processed/annotations/reference_QTLs/ATAC_consensus_peaks.gff3") %>% 
+  as.data.frame() %>% 
+  dplyr::transmute(peak_id = gene_id, center = floor((start + (end-start)/2))) %>%
+  dplyr::as_tibble()
+
+#Import promoter coordinates
+promoter_meta = readRDS("results/SummarizedExperiments/salmonella_salmon_txrevise_promoters.rds") %>%
+  rowData(.) %>% tbl_df2()
+promoter_hits = dplyr::transmute(puQTL_overlaps, transcript_id = phenotype_id) %>% dplyr::distinct()
+group_hits = dplyr::semi_join(promoter_meta, promoter_hits, by = "transcript_id") %>% dplyr::select(transcript_id, group_id)
+promoter_events = dplyr::semi_join(promoter_meta, group_hits, by = "group_id")
+
+#Import coordinates
+revised_granges = updateObject(readRDS("results/annotations/reviseAnnotations.GRangesList.rds"), verbose = TRUE)
+
+tss_coords = revised_granges[promoter_events$transcript_id] %>% 
+  as.list() %>%
+  purrr::map_df(~as.data.frame(.), .id = "transcript_id") %>%
+  dplyr::group_by(transcript_id) %>%
+  dplyr::summarise(start = min(start), end = max(end), strand = strand[1]) %>%
+  dplyr::mutate(tss = ifelse(strand == "-", end, start)) %>%
+  dplyr::select(transcript_id, tss)
+event_tss_coords = dplyr::select(promoter_events, transcript_id, group_id, chr, strand) %>% dplyr::left_join(tss_coords)
+
+#Calcuate min distance
+min_dist = dplyr::rename(puQTL_overlaps, transcript_id = phenotype_id) %>% 
+  dplyr::left_join(group_hits) %>% 
+  dplyr::select(peak_id, group_id) %>% dplyr::distinct() %>% 
+  dplyr::left_join(peak_coords) %>% 
+  dplyr::left_join(event_tss_coords) %>%
+  dplyr::mutate(distance = abs(tss-center)) %>%
+  dplyr::group_by(peak_id, group_id) %>%
+  dplyr::summarize(min_distance = min(distance)) %>%
+  dplyr::ungroup()
+
+dist_pairs = dplyr::rename(puQTL_overlaps, transcript_id = phenotype_id) %>% 
+  dplyr::left_join(group_hits) %>%
+  dplyr::left_join(min_dist, by = c("peak_id", "group_id"))
+
+colocalised_pairs = dplyr::filter(dist_pairs, min_distance < 1000)
+write.table(colocalised_pairs, "results/tables/colocalised_puQTL_caQTL_pairs.txt", row.names = FALSE, quote = FALSE, sep = "\t")
 
 

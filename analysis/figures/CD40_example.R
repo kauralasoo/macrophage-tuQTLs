@@ -216,3 +216,22 @@ boxplot = plotQtlCol(plot_data) +
   ylab("Rate of CD40 exon 6 skipping")
 ggsave("results/figures/CD40_exon_6_skipping.pdf", boxplot, width = 2.5, height = 3.5)
 
+
+#Look at chormatin accessibility
+#Replicate this for the ATAC peak
+atac_list = readRDS("../macrophage-gxe-study/results/ATAC/ATAC_combined_accessibility_data.rds")
+peak_id = "ATAC_peak_161650"
+selected_snp_id = "rs4239702"
+
+plot_data = constructQtlPlotDataFrame(peak_id, selected_snp_id, 
+                                      atac_list$cqn, vcf_file$genotypes, atac_list$sample_metadata, atac_list$gene_metadata) %>% 
+  dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::mutate(condition_name = figure_name) %>%
+  dplyr::filter(condition_name %in% c("N","I+S"))
+
+plotQtlCol(plot_data)
+
+ggsave("results/figures/KIAA1672_promoter_accessibility_boxplot.pdf", boxplot2, width = 2.5, height = 3.5)
+
+

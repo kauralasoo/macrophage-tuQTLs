@@ -151,3 +151,83 @@ joint_plot = cowplot::plot_grid(gwas_manhattan, eqtl_manhattan, tx_plot,
                                 align = "v", ncol = 1, rel_heights = c(3,3,3))
 ggsave("results/figures/HMGCR_coloc.pdf", plot = joint_plot, width = 5, height = 4)
 
+
+
+
+#Make boxplots of full-length transcript expression
+#Extract TPM matrix
+ensembl_ratio_matrix = assays(se_ensembl)$tpm_ratios
+ensmebl_sample_meta = colData(se_ensembl) %>% tbl_df2()
+ensembl_gene_meta = rowData(se_ensembl) %>% tbl_df2() %>%
+  dplyr::mutate(gene_id = transcript_id)
+
+#Extract HMGCR phenotype
+selected_phenotype_id = "ENST00000343975"
+selected_snp_id = "rs3846662"
+
+#Make a QTL boxplot (relative expression)
+plot_data = constructQtlPlotDataFrame(selected_phenotype_id, selected_snp_id, 
+                                      ensembl_ratio_matrix, vcf_file$genotypes, ensmebl_sample_meta, ensembl_gene_meta) %>% 
+  dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::mutate(condition_name = figure_name) %>%
+  dplyr::filter(condition_name %in% c("N"))
+
+boxplot = plotQtlCol(plot_data) + ylab("ENST00000343975 usage") + scale_y_continuous(limits = c(0,0.5))
+ggsave("results/figures/HMGCR_ENST00000343975_ensembl.pdf", plot = boxplot, width = 2.5, height = 3)
+
+#Extract HMGCR phenotype
+selected_phenotype_id = "ENST00000287936"
+selected_snp_id = "rs3846662"
+
+#Make a QTL boxplot (relative expression)
+plot_data = constructQtlPlotDataFrame(selected_phenotype_id, selected_snp_id, 
+                                      ensembl_ratio_matrix, vcf_file$genotypes, ensmebl_sample_meta, ensembl_gene_meta) %>% 
+  dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::mutate(condition_name = figure_name) %>%
+  dplyr::filter(condition_name %in% c("N"))
+
+boxplot = plotQtlCol(plot_data) + ylab("ENST00000287936 usage") + scale_y_continuous(limits = c(0.4,0.9))
+ggsave("results/figures/HMGCR_ENST00000287936_ensembl.pdf", plot = boxplot, width = 2.5, height = 3)
+
+
+
+
+#Extract HMGCR phenotype
+selected_phenotype_id = "ENSG00000113161.grp_2.contained.ENST00000343975"
+selected_snp_id = "rs3846662"
+
+#Make a QTL boxplot (relative expression)
+plot_data = constructQtlPlotDataFrame(selected_phenotype_id, selected_snp_id, 
+                                      ratio_matrix, vcf_file$genotypes, sample_meta, gene_meta) %>% 
+  dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::mutate(condition_name = figure_name) %>%
+  dplyr::filter(condition_name %in% c("N"))
+
+boxplot = plotQtlCol(plot_data) + ylab("txrevse: ENST00000343975 usage") + scale_y_continuous(limits = c(0,0.5))
+ggsave("results/figures/HMGCR_ENST00000343975_txrevise.pdf", plot = boxplot, width = 2.5, height = 3)
+
+
+
+#Make a boxplot of the other trancript
+selected_phenotype_id2 = "ENSG00000113161.grp_2.contained.ENST00000511206"
+
+plot_data = constructQtlPlotDataFrame(selected_phenotype_id2, selected_snp_id, 
+                                      ratio_matrix, vcf_file$genotypes, sample_meta, gene_meta) %>% 
+  dplyr::left_join(constructGenotypeText(selected_snp_id, GRCh38_information), by = "genotype_value") %>%
+  dplyr::left_join(conditionFriendlyNames()) %>%
+  dplyr::mutate(condition_name = figure_name) %>%
+  dplyr::filter(condition_name %in% c("N"))
+
+boxplot2 = plotQtlCol(plot_data) + ylab("txrevise: ENST00000511206 usage")
+ggsave("results/figures/HMGCR_boxplot2.pdf", plot = boxplot2, width = 2.5, height = 3)
+
+
+#Plot transcripts
+hmgcr_transcripts = dplyr::filter(ensembl_gene_meta, gene_name == "HMGCR")
+hmgcr_tx_plot = plotTranscripts(exons[hmgcr_transcripts$transcript_id],cdss[intersect(names(cdss), hmgcr_transcripts$transcript_id)])
+ggsave("results/figures/HMGCR_transcripts.pdf", plot = hmgcr_tx_plot, width = 6, height = 5)
+
+
